@@ -1,0 +1,854 @@
+---
+title: "Advances in STV Margin Computation"
+subtitle: "Fast, tight lower bounds; enabling practical audits"
+institute: "E-Vote-ID 2026"
+date: "8 October 2026"
+date-format: "D MMMM YYYY"
+author: "Michelle Blom, Alexander Ek, Peter J. Stuckey, Vanessa Teague, **Damjan Vukcevic**"
+format:
+  presentation-revealjs+letterbox:
+    from: markdown+emoji
+    self-contained: false
+    #self-contained: true
+    #self-contained-math: true
+    title-slide-attributes:
+      data-background-image: "images/bg-07.png"
+---
+
+# Overview
+
+## Overview
+
+TODO
+
+# STV & margins
+
+## Single Transferable Vote (STV)
+
+- Multi-winner system with ranked ballots
+- Aims for proportional representation
+- A.k.a. "proportional ranked-choice voting"
+
+. . .
+
+::: callout-tip
+### Used for national and other government elections
+
+- Australia, Ireland, Malta
+:::
+
+. . .
+
+::: callout-tip
+### Used for local government elections
+
+- Aotearoa/New Zealand, Northern Ireland, Scotland, USA
+:::
+
+## STV voting
+
+Voters rank candidates in preference order
+
+. . .
+
+::: callout-tip
+### Examples
+
+- \(1\) Melanie, (2) Peter, (3) David
+- \(1\) Peter, (2) Melanie, (3) David
+- \(1\) David
+:::
+
+. . .
+
+::: callout-tip
+### Compact representation
+
+- \[Melanie, Peter, David\]
+- \[Peter, Melanie, David\]
+- \[David\]
+:::
+
+## STV counting (key concepts) {.smaller}
+
+- **Quota** (Droop quota):
+
+$$
+Q = \left\lfloor \frac{\text{\# ballots}}{\text{\# seats} + 1} \right\rfloor + 1
+$$
+
+. . .
+
+- **Seating**: Candidates reaching $Q$ votes are elected
+
+  - Distribute **surplus** votes at reduced **transfer value**:
+
+$$
+\tau = \frac{\text{\# tally} - Q}{\text{\# tally}}
+$$
+
+. . .
+
+- **Elimination**: If no candidate reaches $Q$, eliminate lowest candidate
+
+  - Distribute ballots at full value.
+
+<!-- **Many** methods for calculating quota and transfers (we use Droop and WIGM) -->
+
+<!-- WIGM: Weighted inclusive Gregory method -->
+
+## STV example {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+| Ranking     |    Count |
+|:------------|---------:|
+| $[A]$       |      250 |
+| $[B, A, C]$ |      120 |
+| $[C, D]$    |      400 |
+| $[E]$       |      350 |
+| $[C, E, D]$ |      110 |
+| **Total**   | **1230** |
+
+: Ballots
+:::
+
+::: {.column width="65%"}
+Election Parameters:
+
+- 5 candidates ($A, B, C, D, E$)
+- 3 seats
+- 1230 valid ballots
+- Quota: $Q = \lfloor 1230 / (3 + 1) \rfloor + 1 = 308$
+:::
+:::::
+
+## STV example {.smaller}
+
+::::: columns
+::: {.column width="35%"}
+| Ranking     |    Count |
+|:------------|---------:|
+| $[A]$       |      250 |
+| $[B, A, C]$ |      120 |
+| $[C, D]$    |      400 |
+| $[E]$       |      350 |
+| $[C, E, D]$ |      110 |
+| **Total**   | **1230** |
+
+: Ballots
+
+\
+
+Quota: $Q = \text{308}$
+:::
+
+::: {.column width="65%"}
+| Candidate | Round 1 | Round 2 | Round 3 | Round 4 |
+|:----------|--------:|--------:|--------:|--------:|
+| $A$       |         |         |         |         |
+| $B$       |         |         |         |         |
+| $C$       |         |         |         |         |
+| $D$       |         |         |         |         |
+| $E$       |         |         |         |         |
+
+: Round-by-round tallies
+:::
+:::::
+
+## STV example {.smaller}
+
+:::::: columns
+::: {.column width="35%"}
+| Ranking     |    Count |
+|:------------|---------:|
+| $[A]$       |      250 |
+| $[B, A, C]$ |      120 |
+| $[C, D]$    |      400 |
+| $[E]$       |      350 |
+| $[C, E, D]$ |      110 |
+| **Total**   | **1230** |
+
+: Ballots
+
+\
+
+Quota: $Q = \text{308}$
+:::
+
+:::: {.column width="65%"}
+| Candidate | Round 1 | Round 2 | Round 3 | Round 4 |
+|:----------|--------:|--------:|--------:|--------:|
+| $A$       |     250 |         |         |         |
+| $B$       |     120 |         |         |         |
+| $C$       |     510 |         |         |         |
+| $D$       |       0 |         |         |         |
+| $E$       |     350 |         |         |         |
+
+: Round-by-round tallies
+
+::: callout-note
+### Round 1
+
+- Count first-preference votes
+- $C$ and $E$ reach quota ($\geqslant 308$)
+:::
+::::
+::::::
+
+## STV example {.smaller}
+
+:::::: columns
+::: {.column width="35%"}
+| Ranking     |    Count |
+|:------------|---------:|
+| $[A]$       |      250 |
+| $[B, A, C]$ |      120 |
+| $[C, D]$    |      400 |
+| $[E]$       |      350 |
+| $[C, E, D]$ |      110 |
+| **Total**   | **1230** |
+
+: Ballots
+
+\
+
+Quota: $Q = \text{308}$
+:::
+
+:::: {.column width="65%"}
+| Candidate |          Round 1 | Round 2 | Round 3 | Round 4 |
+|:----------|-----------------:|--------:|--------:|--------:|
+| $A$       |              250 |         |         |         |
+| $B$       |              120 |         |         |         |
+| $C$       | :trophy: **510** |         |         |         |
+| $D$       |                0 |         |         |         |
+| $E$       |              350 |         |         |         |
+
+: Round-by-round tallies
+
+::: callout-note
+### Round 1
+
+- $C$ elected
+- Surplus $= 510 - 308 = 202$
+- Transfer value $\tau_1 = 202 / 510 \approx 0.396$
+:::
+::::
+::::::
+
+## STV example {.smaller}
+
+:::::: columns
+::: {.column width="35%"}
+| Ranking     |    Count |
+|:------------|---------:|
+| $[A]$       |      250 |
+| $[B, A, C]$ |      120 |
+| $[C, D]$    |      400 |
+| $[E]$       |      350 |
+| $[C, E, D]$ |      110 |
+| **Total**   | **1230** |
+
+: Ballots
+
+\
+
+Quota: $Q = \text{308}$
+:::
+
+:::: {.column width="65%"}
+| Candidate |          Round 1 | Round 2 | Round 3 | Round 4 |
+|:----------|-----------------:|--------:|--------:|--------:|
+| $A$       |              250 |     250 |         |         |
+| $B$       |              120 |     120 |         |         |
+| $C$       | :trophy: **510** |     --- |         |         |
+| $D$       |                0 |     202 |         |         |
+| $E$       |              350 |     350 |         |         |
+
+: Round-by-round tallies
+
+::: callout-note
+### Round 2
+
+- Using $\tau_1 \approx 0.396$, distribute 202 surplus votes from $C$
+- $[C, D] \rightarrow D$ (158.43 votes $= 400 \times \tau_1$)
+- $[C, E, D] \rightarrow D$ (43.57 votes $= 110 \times \tau_1$)
+- The $[C, E, D]$ votes skip $E$ because it has already reached quota
+:::
+::::
+::::::
+
+## STV example {.smaller}
+
+:::::: columns
+::: {.column width="35%"}
+| Ranking     |    Count |
+|:------------|---------:|
+| $[A]$       |      250 |
+| $[B, A, C]$ |      120 |
+| $[C, D]$    |      400 |
+| $[E]$       |      350 |
+| $[C, E, D]$ |      110 |
+| **Total**   | **1230** |
+
+: Ballots
+
+\
+
+Quota: $Q = \text{308}$
+:::
+
+:::: {.column width="65%"}
+| Candidate |          Round 1 |          Round 2 | Round 3 | Round 4 |
+|:----------|-----------------:|-----------------:|--------:|--------:|
+| $A$       |              250 |              250 |         |         |
+| $B$       |              120 |              120 |         |         |
+| $C$       | :trophy: **510** |              --- |         |         |
+| $D$       |                0 |              202 |         |         |
+| $E$       |              350 | :trophy: **350** |         |         |
+
+: Round-by-round tallies
+
+::: callout-note
+### Round 2
+
+- $E$ elected
+- Surplus $= 350 - 308 = 42$
+- Transfer value $\tau_2 = 42 / 350 = 0.12$
+:::
+::::
+::::::
+
+## STV example {.smaller}
+
+:::::: columns
+::: {.column width="35%"}
+| Ranking     |    Count |
+|:------------|---------:|
+| $[A]$       |      250 |
+| $[B, A, C]$ |      120 |
+| $[C, D]$    |      400 |
+| $[E]$       |      350 |
+| $[C, E, D]$ |      110 |
+| **Total**   | **1230** |
+
+: Ballots
+
+\
+
+Quota: $Q = \text{308}$
+:::
+
+:::: {.column width="65%"}
+| Candidate |          Round 1 |          Round 2 | Round 3 | Round 4 |
+|:----------|-----------------:|-----------------:|--------:|--------:|
+| $A$       |              250 |              250 |     250 |         |
+| $B$       |              120 |              120 |     120 |         |
+| $C$       | :trophy: **510** |              --- |     --- |         |
+| $D$       |                0 |              202 |     202 |         |
+| $E$       |              350 | :trophy: **350** |     --- |         |
+
+: Round-by-round tallies
+
+::: callout-note
+### Round 3
+
+- Using $\tau_2 = 0.12$, distribute 42 surplus votes from $E$
+- All of these votes exhaust
+- No candidate is above quota
+:::
+::::
+::::::
+
+## STV example {.smaller}
+
+:::::: columns
+::: {.column width="35%"}
+| Ranking     |    Count |
+|:------------|---------:|
+| $[A]$       |      250 |
+| $[B, A, C]$ |      120 |
+| $[C, D]$    |      400 |
+| $[E]$       |      350 |
+| $[C, E, D]$ |      110 |
+| **Total**   | **1230** |
+
+: Ballots
+
+\
+
+Quota: $Q = \text{308}$
+:::
+
+:::: {.column width="65%"}
+| Candidate | Round 1 | Round 2 | Round 3 | Round 4 |
+|:---|---:|---:|---:|---:|
+| $A$ | 250 | 250 | 250 |  |
+| $B$ | 120 | 120 | :slightly_frowning_face: ~~120~~ |  |
+| $C$ | :trophy: **510** | --- | --- |  |
+| $D$ | 0 | 202 | 202 |  |
+| $E$ | 350 | :trophy: **350** | --- |  |
+
+: Round-by-round tallies
+
+::: callout-note
+### Round 3
+
+- $B$ eliminated (lowest tally)
+:::
+::::
+::::::
+
+## STV example {.smaller}
+
+:::::: columns
+::: {.column width="35%"}
+| Ranking     |    Count |
+|:------------|---------:|
+| $[A]$       |      250 |
+| $[B, A, C]$ |      120 |
+| $[C, D]$    |      400 |
+| $[E]$       |      350 |
+| $[C, E, D]$ |      110 |
+| **Total**   | **1230** |
+
+: Ballots
+
+\
+
+Quota: $Q = \text{308}$
+:::
+
+:::: {.column width="65%"}
+| Candidate | Round 1 | Round 2 | Round 3 | Round 4 |
+|:---|---:|---:|---:|---:|
+| $A$ | 250 | 250 | 250 | 370 |
+| $B$ | 120 | 120 | :slightly_frowning_face: ~~120~~ | --- |
+| $C$ | :trophy: **510** | --- | --- | --- |
+| $D$ | 0 | 202 | 202 | 202 |
+| $E$ | 350 | :trophy: **350** | --- | --- |
+
+: Round-by-round tallies
+
+::: callout-note
+### Round 4
+
+- Distribute all 120 votes from $B$
+- All of them go to $A$
+- $A$ reaches quota
+:::
+::::
+::::::
+
+## STV example {.smaller}
+
+:::::: columns
+::: {.column width="35%"}
+| Ranking     |    Count |
+|:------------|---------:|
+| $[A]$       |      250 |
+| $[B, A, C]$ |      120 |
+| $[C, D]$    |      400 |
+| $[E]$       |      350 |
+| $[C, E, D]$ |      110 |
+| **Total**   | **1230** |
+
+: Ballots
+
+\
+
+Quota: $Q = \text{308}$
+:::
+
+:::: {.column width="65%"}
+| Candidate | Round 1 | Round 2 | Round 3 | Round 4 |
+|:---|---:|---:|---:|---:|
+| $A$ | 250 | 250 | 250 | :trophy: **370** |
+| $B$ | 120 | 120 | :slightly_frowning_face: ~~120~~ | --- |
+| $C$ | :trophy: **510** | --- | --- | --- |
+| $D$ | 0 | 202 | 202 | 202 |
+| $E$ | 350 | :trophy: **350** | --- | --- |
+
+: Round-by-round tallies
+
+::: callout-note
+### Round 4
+
+- $A$ elected
+- Counting is complete (3 winners elected)
+:::
+::::
+::::::
+
+## STV example {.smaller}
+
+:::::: columns
+::: {.column width="35%"}
+| Ranking     |    Count |
+|:------------|---------:|
+| $[A]$       |      250 |
+| $[B, A, C]$ |      120 |
+| $[C, D]$    |      400 |
+| $[E]$       |      350 |
+| $[C, E, D]$ |      110 |
+| **Total**   | **1230** |
+
+: Ballots
+
+\
+
+Quota: $Q = \text{308}$
+:::
+
+:::: {.column width="65%"}
+| Candidate | Round 1 | Round 2 | Round 3 | Round 4 |
+|:---|---:|---:|---:|---:|
+| $A$ | 250 | 250 | 250 | :trophy: **370** |
+| $B$ | 120 | 120 | :slightly_frowning_face: ~~120~~ | --- |
+| $C$ | :trophy: **510** | --- | --- | --- |
+| $D$ | 0 | 202 | 202 | 202 |
+| $E$ | 350 | :trophy: **350** | --- | --- |
+
+: Round-by-round tallies
+
+::: callout-note
+### Final state
+
+- Winners: $W = \{C, E, A\}$
+- Transfer values: $\tau_1 \approx 0.396$ (for $C$), $\tau_2 = 0.12$ (for $E$)
+:::
+::::
+::::::
+
+## How close is the election?
+
+::: callout-note
+### Margin of victory
+
+The **minimum** number of cast ballots that must be altered to **change** the set of elected winners $W$.
+:::
+
+. . .
+
+\
+
+Also referred to as the '**margin**'.
+
+## Motivation: Margin $\rightarrow$ Auditing
+
+::::: columns
+::: {.column .incremental width="60%"}
+**Risk-limiting audits (RLAs)**
+
+- Statistical confidence in election outcomes
+
+- No universally efficient RLA method for all STV elections
+
+- Mismatch-based RLAs ([Ek et al. 2026](#references)) will work
+
+- Require a lower bound: $l \leqslant \text{margin}$
+:::
+
+::: {.column .incremental width="40%"}
+**Margin bounding**
+
+- Loose lower bounds $\Rightarrow$ inefficient RLAs
+
+- Need tight lower bounds!
+:::
+:::::
+
+## Why is calculating STV margins hard?
+
+1.  Elimination cascades
+
+    - Small early changes can trigger large changes later.
+
+2.  Non-monotonicity
+
+    - Adding votes to $E$ can cause $E$'s preferred ally to lose.
+
+3.  Non-linearity
+
+    - $\tau$ depends non-linearly on the vote tallies.
+
+# Margin calculation algorithms
+
+## Existing method (BST-19) {.smaller}
+
+- **Outcome Prefix (**$\pi$**):** Sequence of candidate seatings and eliminations (e.g., $\pi = [(C, 1), (E, 1), (A, 0)]$).
+
+- **Search Tree Structure:**
+
+  - **Root:** Empty sequence.
+
+  - **Branching:** Seat candidate $(c, 1)$ or Eliminate candidate $(c, 0)$.
+
+- **Best-First Branch-and-Bound:**
+
+  - Maintains frontier $F$ of nodes $(l, \pi)$, sorted by lower bound $l$.
+
+  - Tracks running upper limit $rul$ (cheapest known outcome-changing manipulation).
+
+  - Prunes nodes where $l \geqslant rul$.
+
+::: footer
+[Blom et al. (2019)](#references)
+:::
+
+::: notes
+The search framework introduced by Blom et al. in 2019 (BST-19) models alternate election paths as a tree of prefixes. Each prefix defines a sequence of seatings and eliminations. The goal is to explore partial outcome prefixes and find the minimum ballot changes required to produce a different set of winners. The critical bottleneck is computing a tight lower bound $l$ for any partial prefix $\pi$ quickly.
+:::
+
+## New advances (STV-26) {.smaller}
+
+- **Component 1 (Upper Bounds):** Integrated `ConcreteSTV` heuristic for tight initial $rul$.
+
+- **Component 2 (Exact MINLPs):** Replaced linear relaxations with exact non-linear programs using **Super-Candidate Relaxation**.
+
+- **Component 3 (Context-Aware Tally Bounds):** Rigorous tracking of ballot piles ($B^{\text{must}}$, $B^{\text{maybe}}$) and transfer value ranges ($T^{\min}, T^{\max}$).
+
+- **Component 4 (New Lower Bounds):** Introduced **Displacement Lower Bound (**$l_{\text{disp}}$**)** to anticipate forced winner changes in future rounds.
+
+- **Component 5 (Pruning):** **Dominance Pruning** to detect and prune structurally equivalent search paths.
+
+::: notes
+STV-26 introduces five key improvements over the BST-19 baseline. We integrate tight upper bounds, solve exact MINLPs with super-candidate relaxation, track context-aware ballot piles, introduce a new displacement lower bound l_disp, and apply dominance pruning. Let's look at each of these components in detail.
+:::
+
+## Component 1 -- Upper bounds with ConcreteSTV {.smaller}
+
+- **Role of the Running Upper Limit (**$rul$**):**
+
+  - Defines global threshold for search tree pruning.
+
+  - Any partial prefix requiring $\ge rul$ edits is immediately discarded.
+
+- **ConcreteSTV Integration:**
+
+  - Performs local heuristic search for explicit, valid ballot modifications that alter winner set $W' \neq W$.
+
+  - Provides near-optimal initial upper bounds.
+
+- **Impact on Search:**
+
+  - A tighter initial $rul$ prunes vast subtrees at shallow depths before running expensive optimization solver calls.
+
+::: notes
+Component 1 addresses the starting upper limit. BST-19 used loose initial upper bounds, which meant the algorithm spent hours expanding unviable subtrees before tightening the limit. By integrating ConcreteSTV, which searches for explicit ballot modifications, we start with a tight running limit right at the root.
+:::
+
+::: footer
+ConcreteSTV: <https://github.com/AndrewConway/ConcreteSTV>
+:::
+
+## Component 2 -- Exact MINLP solving & super-candidate relaxation {.smaller}
+
+- **Moving Beyond Linear Relaxations:**
+
+  - BST-19 linearized STV transfer rules, introducing loose bounds.
+
+  - STV-26 solves **exact Mixed-Integer Non-Linear Programs (MINLPs)** preserving true WIGM rules.
+
+- **Super-Candidate Relaxation (**$\tilde{\pi}$**):**
+
+  - Groups sequences of 3+ eliminated candidates into a single **super candidate** (e.g., $(B, E, F) \rightarrow BE$).
+
+  - Leaves the final candidate $c_n$ unmerged to prevent over-relaxation:
+
+    $$
+    \text{Original: } [(A, 0), (C, 1), (B, 0), (E, 0), (F, 0), (D, 1)]
+    $$
+
+    $$
+    \text{Relaxed } \tilde{\pi}: [(A, 0), (C, 1), (\mathbf{BE}, 0), (F, 0), (D, 1)]
+    $$
+
+- **Benefit:** Reduces optimization variables dramatically while maintaining exact non-linear transfer semantics.
+
+::: notes
+To make exact MINLP solving computationally tractable over long elimination sequences, we introduce Super-Candidate Relaxation. We merge internal sequences of eliminated candidates into a single super-candidate, leaving the last candidate separate. This drastically reduces the number of variables in the solver while preserving exact non-linear WIGM transfer value equations.
+:::
+
+## Component 3 -- Context-aware tally bounds {.smaller}
+
+- **Tracking Ballot Movements:**
+
+  - $B^{\text{must}}_{\pi, c, r}$: Ballots that *definitely* reside in candidate $c$'s pile at round $r$.
+
+  - $B^{\text{maybe}}_{\pi, c, r}$: Ballots that *could possibly* reside in candidate $c$'s pile at round $r$.
+
+- **Transfer Value Ranges:**
+
+  $$
+  T^{\min}_{\pi, c, r} = \frac{\max(Q, V^{\min}) - Q}{\max(Q, V^{\min})}, \quad T^{\max}_{\pi, c, r} = \frac{\max(Q, V^{\max}) - Q}{\max(Q, V^{\max})}
+  $$
+
+- **Example (from Running Example):**
+
+  - Candidate $D$ at Round 3 under $\pi = [(C, 1), (E, 1), (A, 0)]$:
+
+  - $V^{\min}_{\pi, D, 3} = 163.63$ votes vs. $V^{\max}_{\pi, D, 3} = 201.96$ votes.
+
+  - Previous BST-19 bounds coarsely assumed ballot values of 0 or 1!
+
+::: notes
+When multiple seatings occur in sequence, exact ballot locations depend on candidate quota timing. STV-26 tracks B_must and B_maybe sets along with upper and lower bounds on transfer values T_min and T_max. In our running example, candidate D's tally is bounded tightly between 163.63 and 201.96, whereas BST-19 coarsely assumed ballot values between 0 and 1.
+:::
+
+## Component 4 -- Lower bounds ($l_{\text{elim}}$, $l_{\text{quota}}$, $l_{\text{disp}}$) {.smaller}
+
+- **Elimination Lower Bound (**$l_{\text{elim}}$**):** Min cost to keep eliminated candidate lowest.
+
+  $$
+  l_{\text{elim}}(\pi, c) = \max_{c' \in S_{\pi, r} \setminus \{c\}} \left( \frac{V^{\min}_{\pi, c, r} - V^{\max}_{\pi, c', r}}{2} \right)^+
+  $$
+
+- **Quota Lower Bound (**$l_{\text{quota}}$**):** Min cost to raise seated candidate to quota $Q$.
+
+  $$
+  l_{\text{quota}}(\pi, c) = (Q - V^{\max}_{\pi, c, r})^+
+  $$
+
+- **Displacement Lower Bound (**$l_{\text{disp}}$**) --- NEW:**
+
+  - Evaluates future rounds beyond prefix $\pi$.
+
+  - Forces at least one reported loser $c \in L_\pi$ to displace a reported winner $w \in W$:
+
+    $$
+    l_{\text{disp}}(\pi) = \min_{c \in L_\pi} \max \left\{ \text{DispCost}_{\pi, c}, \min(\text{QuotaCost}_{\pi, c}, \text{LeftAtEndCost}_{\pi, c}) \right\}
+    $$
+
+::: notes
+For every node in the search tree, we compute elimination, quota, and displacement lower bounds. The key addition in STV-26 is l_disp. Even if a prefix matches early reported rounds with 0 cost, l_disp looks ahead to future rounds to determine the minimum edits needed for a standing loser to displace a standing winner later in tabulation.
+:::
+
+## Component 5 -- Dominance pruning {.smaller}
+
+- **Core Observation:**
+
+  - Multiple distinct search paths lead to identical super-candidate relaxed states ($\tilde{\pi} \equiv \tilde{\pi}'$).
+
+- **Dominance Rule:**
+
+  - Node $(l, \pi)$ is **dominated** by node $(l', \pi')$ if $\tilde{\pi} \equiv \tilde{\pi}'$ and $l' \le l$.
+
+  - If an equivalent path with a smaller or equal bound has already been explored or exists in frontier $F$, **discard** $(l, \pi)$ **immediately**.
+
+- **Why It Works:**
+
+  - Future MINLPs built on top of $\pi$ and $\pi'$ are identical.
+
+  - Eliminates duplicate subtree expansions before calling expensive MINLP solvers.
+
+::: notes
+Dominance pruning is a major speedup factor in STV-26. Different permutation paths often resolve to the exact same relaxed super-candidate structure pi-tilde. If we have already evaluated a path with the same relaxed structure and a lower bound, any future extension will yield an identical MINLP optimization problem. We can safely discard the higher-cost duplicate node immediately.
+:::
+
+# Results
+
+## BST-19 re-implemented
+
+Understanding the difference between the published baseline and our re-implementation:
+
+::::: columns
+::: {.column width="50%"}
+### BST-19 (Blom et al., 2019)
+
+- **Ruleset:** Australian Senate rules (fractional surplus handling differs on subsequent transfers).
+- **Environment:** Original 2019 codebase and hardware.
+- **Timeout:** 12 hours (43,200s).
+- **Pruning & MINLP:** Linearized MINLP relaxation; older lower-bounding heuristics.
+:::
+
+::: {.column width="50%"}
+### BST-19\* (Re-implementation)
+
+- **Ruleset:** Weighted Inclusive Gregory Method (WIGM). Equivalent to Senate rules for 2-seat contests.
+- **Environment:** Modern 32 vCPU, 128 GB RAM server with 30-node parallelization.
+- **Timeout:** 10,000s.
+- **Purpose:** Isolates hardware/solver gains vs. new algorithmic contributions in **STV-26**.
+:::
+:::::
+
+::: notes
+Why distinguish BST-19 from BST-19*? BST-19* uses the exact same algorithmic principles as BST-19, but runs on modern hardware with parallelization and aligned WIGM rules. Comparing BST-19\* to STV-26 allows us to isolate the pure benefit of our new algorithmic contributions (direct MINLP solving, displacement bounds, dominance pruning) from raw compute power improvements.
+:::
+
+## Small & medium elections {.smaller}
+
+| **Election** | **Seats** | **Candidates** | **Ballots** | **UB** | **BST-19\* LB** | **STV-26 LB** | **BST-19\* Time** | **STV-26 Time** |
+|:-------|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|
+| **MN BET '17** | 2 | 4 | 48,163 | 16,863 | 16,863 | **16,863** | 0.31 s | **0.10 s** |
+| **Glasgow (Springburn)** | 3 | 10 | 5,410 | 528 | 505 | **528** | 10 ks | **441 s** |
+| **Glasgow (Shettleston)** | 4 | 11 | 8,803 | 353 | 270 | **353** | 10 ks | **6,170 s** |
+| **Dublin North** | 4 | 13 | 43,942 | 211 | 211 | **211** | 165s | **174 s** |
+
+**Key Takeaway:** STV-26 proves **exact margins** (LB = UB) in seconds to minutes for Scottish, US, and Irish contests where previous methods timed out (\>10,000s).
+
+## Australian Senate
+
+| **Election** | **UB** | **BST-19\* LB** | **STV-26 LB** | **STV-26 Runtime** |
+|:-------------|-------:|----------------:|--------------:|-------------------:|
+| **ACT 2016** | 18,835 |             343 |     **9,162** |              10 ks |
+| **ACT 2019** | 12,939 |           1,635 |     **9,933** |              10 ks |
+| **NT 2013**  |  2,298 |             212 | **(!) 2,298** |         **1.12 s** |
+| **NT 2016**  | 11,244 |           3,120 |     **7,438** |              10 ks |
+| **NT 2022**  | 11,412 |             474 |     **5,092** |              10 ks |
+
+```{=html}
+<!--
+* **10 Multi-Candidate 2-Seat Contests** (14–27 candidates, up to 293k ballots):
+
+* **Substantial Progress:** Lower bounds increased by **up to 10–20x** over BST-19\*.
+-->
+```
+
+## Practical impact on audits
+
+- **Case study: Northern Territory (NT) 2022 Election**
+
+  - Reported Upper Bound: 11,412 \| Old Bound (BST-19\*): 474 \| **STV-26 Bound: 5,092**
+
+- **Impact on Mismatch-Based RLA Sample Sizes:**
+
+| **Assumed Ballot Mismatch Rate** | **Audit Sample Size (Old Bound = 474)** | **Audit Sample Size (STV-26 Bound = 5,092)** |
+|:-----------------------|-----------------------:|-----------------------:|
+| **0.1% Mismatch Rate** | \> 1,000 ballots | **\~ 55 ballots** |
+| **1.0% Mismatch Rate** | \~ 100,000 ballots | **\~ 106 ballots** |
+
+- **Result:** STV-26 turns an impossible manual audit of 100,000 ballots into a practical check of **106 ballots**.
+
+## Summary
+
+- Contributions:
+
+  - Exact MINLP solving with super-candidate relaxation.
+
+  - Context-aware tally bounds ($B^{\text{must}}, B^{\text{maybe}}$) and displacement bound $l_{\text{disp}}$.
+
+  - Dominance pruning to eliminate redundant search branches.
+
+  - Proven exact margins internationally and up to **20x higher bounds** in Australia.
+
+- **Open-source implementation:** <https://github.com/michelleblom/pymarginstv>
+
+## Future directions
+
+- Scaling to large 6–12 seat Australian Senate elections (100+ candidates).
+
+- Extending bounds to alternative STV variants (e.g., Meek's method).
+
+# Questions?
+
+## References :books: {#references .smaller}
+
+- Blom, Stuckey, Teague (2019). [Toward computing the margin of victory in single transferable vote elections](https://doi.org/10.1287/ijoc.2018.0853). *INFORMS Journal on Computing* 31(4):636--653.
+
+- Ek, Blom, Stark, Stuckey, Teague, Vukcevic (2026). [Doing more with less: Mismatch-based risk-limiting audits](https://doi.org/10.1007/978-3-032-00495-6_13). In: Financial Cryptography and Data Security. FC 2025 International Workshops. *Lecture Notes in Computer Science* 15754:241--255.
+
+# Appendix
+
+TODO
