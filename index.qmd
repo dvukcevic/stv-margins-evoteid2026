@@ -21,6 +21,17 @@ format:
 
 TODO
 
+## Acknowledgements :moneybag:
+
+Australian Research Council (ARC):
+
+- Discovery Project [DP220101012](https://dataportal.arc.gov.au/NCGP/Web/Grant/Grant/DP220101012)
+- OPTIMA ITTC [IC200100009](https://dataportal.arc.gov.au/NCGP/Web/Grant/Grant/IC200100009)
+
+European Research Council (ERC):
+
+- CertiFOX, [101122653](https://doi.org/10.3030/101122653)
+
 # STV & margins
 
 ## Single Transferable Vote (STV)
@@ -46,6 +57,8 @@ TODO
 :::
 
 ## STV voting
+
+<!-- TODO: replace with a photo -->
 
 Voters rank candidates in preference order
 
@@ -517,6 +530,7 @@ Quota: $Q = \text{308}$
 
 - Winners: $W = \{C, E, A\}$
 - Transfer values: $\tau_1 \approx 0.396$ (for $C$), $\tau_2 = 0.12$ (for $E$)
+- Election order: $(C^+, E^+, B^-, D^+)$
 :::
 ::::
 ::::::
@@ -533,7 +547,7 @@ The **minimum** number of cast ballots that must be altered to **change** the se
 
 \
 
-Also referred to as the '**margin**'.
+Also referred to as the '**margin**'
 
 ## Motivation: Margin $\rightarrow$ Auditing
 
@@ -547,7 +561,7 @@ Also referred to as the '**margin**'.
 
 - Mismatch-based RLAs ([Ek et al. 2026](#references)) will work
 
-- Require a lower bound: $l \leqslant \text{margin}$
+- Require a lower bound: $lb \leqslant \text{margin}$
 :::
 
 ::: {.column .incremental width="40%"}
@@ -577,47 +591,283 @@ Also referred to as the '**margin**'.
 
 ## Existing method (BST-19) {.smaller}
 
-- **Outcome Prefix (**$\pi$**):** Sequence of candidate seatings and eliminations (e.g., $\pi = [(C, 1), (E, 1), (A, 0)]$).
+::::: columns
+::: {.column .incremental width="35%"}
+- **Election order prefix** ($\pi$):
 
-- **Search Tree Structure:**
+  - E.g., $\pi = (C^+, E^+, A^-)$
 
-  - **Root:** Empty sequence.
+- **Prefix tree**:
 
-  - **Branching:** Seat candidate $(c, 1)$ or Eliminate candidate $(c, 0)$.
+  - Root: empty sequence $()$
 
-- **Best-First Branch-and-Bound:**
+  - Branching: seat candidate $c^+$ or eliminate candidate $c^-$
+:::
 
-  - Maintains frontier $F$ of nodes $(l, \pi)$, sorted by lower bound $l$.
+::: {.column .incremental width="60%"}
+- **Best-first branch-and-bound**:
 
-  - Tracks running upper limit $rul$ (cheapest known outcome-changing manipulation).
+  - Maintain frontier $F$ of nodes $(lb, \pi)$, sorted by lower bound $lb$
 
-  - Prunes nodes where $l \geqslant rul$.
+    - Calculate $lb$ using **lower-bounding heuristics**
+
+  - Track **running upper limit** $rul$ (cheapest known outcome-changing manipulation)
+
+    - Initialise $rul$ with an **upper bound**
+    - Update $rul$ using **complete** outcomes $\pi$ (fully expanded branches)
+
+  - Prunes nodes where $lb \geqslant rul$
+
+  - Return smallest $lb$ (same as $rul$ once all nodes pruned)
+:::
+:::::
 
 ::: footer
 [Blom et al. (2019)](#references)
 :::
 
-::: notes
-The search framework introduced by Blom et al. in 2019 (BST-19) models alternate election paths as a tree of prefixes. Each prefix defines a sequence of seatings and eliminations. The goal is to explore partial outcome prefixes and find the minimum ballot changes required to produce a different set of winners. The critical bottleneck is computing a tight lower bound $l$ for any partial prefix $\pi$ quickly.
-:::
+## Prefix tree
+
+```{mermaid}
+graph TD
+    %% Root node
+    root("$$\pi = (\,)$$") -->  A1 & A0 & B1 & B0
+    root -.-> dotsR(" ")
+
+    %% Stage 1 nodes
+    A1("$$\pi = (A^+)$$")   -->  A1B1 & A1B0
+    A0("$$\pi = (A^-)$$")   -->  A0B1 & A0B0
+    A1                     -.->  dotsA1(" ")
+    A0                     -.->  dotsA0(" ")
+    B1("$$\pi = (B^+)$$")  -.->  dotsB1(" ")
+    B0("$$\pi = (B^-)$$")  -.->  dotsB0(" ")
+
+    %% Stage 2 nodes
+    A1B1("$$\pi = (A^+, B^+)$$") -.-> dots11(" ")
+    A1B0("$$\pi = (A^+, B^-)$$") -.-> dots10(" ")
+    A0B1("$$\pi = (A^-, B^+)$$") -.-> dots01(" ")
+    A0B0("$$\pi = (A^-, B^-)$$") -.-> dots00(" ")
+
+    %% Styling to make ellipsis destination nodes borderless
+    classDef plain fill:none,stroke:none;
+    class dotsR,dotsA1,dotsA0,dotsB1,dotsB0,dots11,dots10,dots01,dots00 plain;
+```
+
+## Tree traversal
+
+<!-- TODO: Use multi-line nodes: lb \n pi -->
+
+```{mermaid}
+graph TD
+    %% Root node
+    root("$$lb = 0; \pi = (\,)$$") --> A1 & A0 & B1 & B0
+    root -.-> dotsR(" ")
+
+    %% Stage 1 nodes
+    A1("$$lb = ?; \pi = (A^+)$$")   -->  A1B1 & A1B0
+    A0("$$lb = ?; \pi = (A^-)$$")   -->  A0B1 & A0B0
+    A1                             -.->  dotsA1(" ")
+    A0                             -.->  dotsA0(" ")
+    B1("$$lb = ?; \pi = (B^+)$$")  -.->  dotsB1(" ")
+    B0("$$lb = ?; \pi = (B^-)$$")  -.->  dotsB0(" ")
+
+    %% Stage 2 nodes
+    A1B1("$$lb = ?; \pi = (A^+, B^+)$$") -.-> dots11(" ")
+    A1B0("$$lb = ?; \pi = (A^+, B^-)$$") -.-> dots10(" ")
+    A0B1("$$lb = ?; \pi = (A^-, B^+)$$") -.-> dots01(" ")
+    A0B0("$$lb = ?; \pi = (A^-, B^-)$$") -.-> dots00(" ")
+
+    %% Styling to make ellipsis destination nodes borderless
+    classDef plain fill:none,stroke:none;
+    class dotsR,dotsA1,dotsA0,dotsB1,dotsB0,dots11,dots10,dots01,dots00 plain;
+
+    %% Styling untraversed nodes
+    classDef unvisited fill:#f5f5f5,stroke:#d9d9d9,color:#8c8c8c;
+    class A1,A0,B1,B0,A1B1,A1B0,A0B1,A0B0 unvisited;
+```
+
+$rul = 75$
+
+## Tree traversal
+
+```{mermaid}
+graph TD
+    %% Root node
+    root("$$lb = 0; \pi = (\,)$$") --> A1 & A0 & B1 & B0
+    root -.-> dotsR(" ")
+
+    %% Stage 1 nodes
+    A1("$$lb =  5; \pi = (A^+)$$")   -->  A1B1 & A1B0
+    A0("$$lb = 10; \pi = (A^-)$$")   -->  A0B1 & A0B0
+    A1                              -.->  dotsA1(" ")
+    A0                              -.->  dotsA0(" ")
+    B1("$$lb = 80; \pi = (B^+)$$")  -.->  dotsB1(" ")
+    B0("$$lb = 50; \pi = (B^-)$$")  -.->  dotsB0(" ")
+
+    %% Stage 2 nodes
+    A1B1("$$lb = ?; \pi = (A^+, B^+)$$") -.-> dots11(" ")
+    A1B0("$$lb = ?; \pi = (A^+, B^-)$$") -.-> dots10(" ")
+    A0B1("$$lb = ?; \pi = (A^-, B^+)$$") -.-> dots01(" ")
+    A0B0("$$lb = ?; \pi = (A^-, B^-)$$") -.-> dots00(" ")
+
+    %% Styling to make ellipsis destination nodes borderless
+    classDef plain fill:none,stroke:none;
+    class dotsR,dotsA1,dotsA0,dotsB1,dotsB0,dots11,dots10,dots01,dots00 plain;
+
+    %% Styling pruned nodes
+    classDef pruned fill:#fce8e6,stroke:#ea4335,stroke-dasharray: 5 5;
+    class root pruned;
+
+    %% Styling untraversed nodes
+    classDef unvisited fill:#f5f5f5,stroke:#d9d9d9,color:#8c8c8c;
+    class A1B1,A1B0,A0B1,A0B0 unvisited;
+```
+
+$rul = 75$
+
+## Tree traversal
+
+```{mermaid}
+graph TD
+    %% Root node
+    root("$$lb = 0; \pi = (\,)$$") --> A1 & A0 & B1 & B0
+    root -.-> dotsR(" ")
+
+    %% Stage 1 nodes
+    A1("$$lb =  5; \pi = (A^+)$$")   -->  A1B1 & A1B0
+    A0("$$lb = 10; \pi = (A^-)$$")   -->  A0B1 & A0B0
+    A1                              -.->  dotsA1(" ")
+    A0                              -.->  dotsA0(" ")
+    B1("$$lb = 80; \pi = (B^+)$$")  -.->  dotsB1(" ")
+    B0("$$lb = 50; \pi = (B^-)$$")  -.->  dotsB0(" ")
+
+    %% Stage 2 nodes
+    A1B1("$$lb = ?; \pi = (A^+, B^+)$$") -.-> dots11(" ")
+    A1B0("$$lb = ?; \pi = (A^+, B^-)$$") -.-> dots10(" ")
+    A0B1("$$lb = ?; \pi = (A^-, B^+)$$") -.-> dots01(" ")
+    A0B0("$$lb = ?; \pi = (A^-, B^-)$$") -.-> dots00(" ")
+
+    %% Styling to make ellipsis destination nodes borderless
+    classDef plain fill:none,stroke:none;
+    class dotsR,dotsA1,dotsA0,dotsB1,dotsB0,dots11,dots10,dots01,dots00 plain;
+
+    %% Styling pruned nodes
+    classDef pruned fill:#fce8e6,stroke:#ea4335,stroke-dasharray: 5 5;
+    class root,B1 pruned;
+
+    %% Styling untraversed nodes
+    classDef unvisited fill:#f5f5f5,stroke:#d9d9d9,color:#8c8c8c;
+    class A1B1,A1B0,A0B1,A0B0 unvisited;
+```
+
+$rul = 75$
+
+## Tree traversal
+
+```{mermaid}
+graph TD
+    %% Root node
+    root("$$lb = 0; \pi = (\,)$$") --> A1 & A0 & B1 & B0
+    root -.-> dotsR(" ")
+
+    %% Stage 1 nodes
+    A1("$$lb =  5; \pi = (A^+)$$")   -->  A1B1 & A1B0
+    A0("$$lb = 10; \pi = (A^-)$$")   -->  A0B1 & A0B0
+    A1                              -.->  dotsA1(" ")
+    A0                              -.->  dotsA0(" ")
+    B1("$$lb = 80; \pi = (B^+)$$")  -.->  dotsB1(" ")
+    B0("$$lb = 50; \pi = (B^-)$$")  -.->  dotsB0(" ")
+
+    %% Stage 2 nodes
+    A1B1("$$lb = 80; \pi = (A^+, B^+)$$") -.-> dots11(" ")
+    A1B0("$$lb = 65; \pi = (A^+, B^-)$$") -.-> dots10(" ")
+    A0B1("$$lb =  ?; \pi = (A^-, B^+)$$") -.-> dots01(" ")
+    A0B0("$$lb =  ?; \pi = (A^-, B^-)$$") -.-> dots00(" ")
+
+    %% Styling to make ellipsis destination nodes borderless
+    classDef plain fill:none,stroke:none;
+    class dotsR,dotsA1,dotsA0,dotsB1,dotsB0,dots11,dots10,dots01,dots00 plain;
+
+    %% Styling pruned nodes
+    classDef pruned fill:#fce8e6,stroke:#ea4335,stroke-dasharray: 5 5;
+    class root,A1,B1 pruned;
+
+    %% Styling untraversed nodes
+    classDef unvisited fill:#f5f5f5,stroke:#d9d9d9,color:#8c8c8c;
+    class A0B1,A0B0 unvisited;
+```
+
+$rul = 75$
+
+## Tree traversal
+
+```{mermaid}
+graph TD
+    %% Root node
+    root("$$lb = 0; \pi = (\,)$$") --> A1 & A0 & B1 & B0
+    root -.-> dotsR(" ")
+
+    %% Stage 1 nodes
+    A1("$$lb =  5; \pi = (A^+)$$")   -->  A1B1 & A1B0
+    A0("$$lb = 10; \pi = (A^-)$$")   -->  A0B1 & A0B0
+    A1                              -.->  dotsA1(" ")
+    A0                              -.->  dotsA0(" ")
+    B1("$$lb = 80; \pi = (B^+)$$")  -.->  dotsB1(" ")
+    B0("$$lb = 50; \pi = (B^-)$$")  -.->  dotsB0(" ")
+
+    %% Stage 2 nodes
+    A1B1("$$lb = 80; \pi = (A^+, B^+)$$") -.-> dots11(" ")
+    A1B0("$$lb = 65; \pi = (A^+, B^-)$$") -.-> dots10(" ")
+    A0B1("$$lb =  ?; \pi = (A^-, B^+)$$") -.-> dots01(" ")
+    A0B0("$$lb =  ?; \pi = (A^-, B^-)$$") -.-> dots00(" ")
+
+    %% Styling to make ellipsis destination nodes borderless
+    classDef plain fill:none,stroke:none;
+    class dotsR,dotsA1,dotsA0,dotsB1,dotsB0,dots11,dots10,dots01,dots00 plain;
+
+    %% Styling pruned nodes
+    classDef pruned fill:#fce8e6,stroke:#ea4335,stroke-dasharray: 5 5;
+    class root,A1,B1,A1B1 pruned;
+
+    %% Styling untraversed nodes
+    classDef unvisited fill:#f5f5f5,stroke:#d9d9d9,color:#8c8c8c;
+    class A0B1,A0B0 unvisited;
+```
+
+$rul = 75$
+
+## Lower-bounding heuristics {.smaller}
+
+**Elimination lower bound**
+
+- $l_{\text{elim}}(\pi, c) =$ Given $\pi$, minimum cost to keep eliminated candidate $c$ lowest, in the round when they should be eliminated
+
+**Quota lower bound**
+
+- $l_{\text{quota}}(\pi, c) =$ Given $\pi$, minimum cost to raise seated candidate $c$ to quota $Q$, in the round they should be seated
+
+**MINLP**
+
+- Mixed-integer non-linear program (MINLP), with linear relaxations
+- Computes minimal manipulations given $\pi$
 
 ## New advances (STV-26) {.smaller}
 
-- **Component 1 (Upper Bounds):** Integrated `ConcreteSTV` heuristic for tight initial $rul$.
+- **Upper bounds:** Use `ConcreteSTV` heuristic for tighter initial $rul$
 
-- **Component 2 (Exact MINLPs):** Replaced linear relaxations with exact non-linear programs using **Super-Candidate Relaxation**.
+- **Exact MINLPs:** Replaced linear relaxations with exact non-linear programs, and use **super-candidate relaxation**
 
-- **Component 3 (Context-Aware Tally Bounds):** Rigorous tracking of ballot piles ($B^{\text{must}}$, $B^{\text{maybe}}$) and transfer value ranges ($T^{\min}, T^{\max}$).
+- **Context-aware tally bounds:** Rigorous tracking of ballot piles ($B^{\text{must}}$, $B^{\text{maybe}}$) and transfer value ranges ($T^{\min}, T^{\max}$)
 
-- **Component 4 (New Lower Bounds):** Introduced **Displacement Lower Bound (**$l_{\text{disp}}$**)** to anticipate forced winner changes in future rounds.
+- **New lower bounds:** Introduced **Displacement Lower Bound (**$l_{\text{disp}}$**)** to anticipate forced winner changes in future rounds
 
-- **Component 5 (Pruning):** **Dominance Pruning** to detect and prune structurally equivalent search paths.
+- **Pruning:** **Dominance Pruning** to detect and prune structurally equivalent search paths
 
 ::: notes
 STV-26 introduces five key improvements over the BST-19 baseline. We integrate tight upper bounds, solve exact MINLPs with super-candidate relaxation, track context-aware ballot piles, introduce a new displacement lower bound l_disp, and apply dominance pruning. Let's look at each of these components in detail.
 :::
 
-## Component 1 -- Upper bounds with ConcreteSTV {.smaller}
+## 1. Upper bounds with ConcreteSTV {.smaller}
 
 - **Role of the Running Upper Limit (**$rul$**):**
 
@@ -643,7 +893,7 @@ Component 1 addresses the starting upper limit. BST-19 used loose initial upper 
 ConcreteSTV: <https://github.com/AndrewConway/ConcreteSTV>
 :::
 
-## Component 2 -- Exact MINLP solving & super-candidate relaxation {.smaller}
+## 2. Exact MINLP solving & super-candidate relaxation {.smaller}
 
 - **Moving Beyond Linear Relaxations:**
 
@@ -671,7 +921,7 @@ ConcreteSTV: <https://github.com/AndrewConway/ConcreteSTV>
 To make exact MINLP solving computationally tractable over long elimination sequences, we introduce Super-Candidate Relaxation. We merge internal sequences of eliminated candidates into a single super-candidate, leaving the last candidate separate. This drastically reduces the number of variables in the solver while preserving exact non-linear WIGM transfer value equations.
 :::
 
-## Component 3 -- Context-aware tally bounds {.smaller}
+## 3. Context-aware tally bounds {.smaller}
 
 - **Tracking Ballot Movements:**
 
@@ -697,7 +947,7 @@ To make exact MINLP solving computationally tractable over long elimination sequ
 When multiple seatings occur in sequence, exact ballot locations depend on candidate quota timing. STV-26 tracks B_must and B_maybe sets along with upper and lower bounds on transfer values T_min and T_max. In our running example, candidate D's tally is bounded tightly between 163.63 and 201.96, whereas BST-19 coarsely assumed ballot values between 0 and 1.
 :::
 
-## Component 4 -- Lower bounds ($l_{\text{elim}}$, $l_{\text{quota}}$, $l_{\text{disp}}$) {.smaller}
+## 4. Lower bounds {.smaller}
 
 - **Elimination Lower Bound (**$l_{\text{elim}}$**):** Min cost to keep eliminated candidate lowest.
 
@@ -725,7 +975,7 @@ When multiple seatings occur in sequence, exact ballot locations depend on candi
 For every node in the search tree, we compute elimination, quota, and displacement lower bounds. The key addition in STV-26 is l_disp. Even if a prefix matches early reported rounds with 0 cost, l_disp looks ahead to future rounds to determine the minimum edits needed for a standing loser to displace a standing winner later in tabulation.
 :::
 
-## Component 5 -- Dominance pruning {.smaller}
+## 5. Dominance pruning {.smaller}
 
 - **Core Observation:**
 
