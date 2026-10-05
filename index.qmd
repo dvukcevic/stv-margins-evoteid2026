@@ -58,8 +58,12 @@ European Research Council (ERC):
 
 ## STV voting
 
-<!-- TODO: replace with a photo -->
+::::: columns
+:::: {.column width="60%"}
+![](images/irish-election-1000x803.jpg)
+::::
 
+:::: {.column width="40%"}
 Voters rank candidates in preference order
 
 . . .
@@ -80,6 +84,12 @@ Voters rank candidates in preference order
 - \[Melanie, Peter, David\]
 - \[Peter, Melanie, David\]
 - \[David\]
+:::
+::::
+:::::
+
+::: footer
+Image: [William Murphy](https://commons.wikimedia.org/wiki/File:Irish_Election_2011_-_The_Count_At_The_RDS.jpg), [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/), via Wikimedia Commons
 :::
 
 ## STV counting (key concepts) {.smaller}
@@ -1123,29 +1133,30 @@ Example: **Northern Territory (NT) 2022 Election**
 
 ## Download
 
-<!-- TODO: add QR code with this page's URL -->
-
 Slides :desktop_computer: <https://dvukcevic.github.io/stv-margins-evoteid2026/>
 
 Paper :bookmark_tabs: <https://arxiv.org/abs/2607.21178>
 
 Software :minidisc: <https://github.com/michelleblom/pymarginstv>
 
+![](images/qrcode_dvukcevic-github-io.png)
+
+
 ## References :books: {#references .smaller}
 
-<!-- TODO: Update info for references -->
-
-- Blom, Conway, Stuckey, Teague (2020). [Did that lost ballot box cost me a seat? Computing manipulations of STV elections](). In: AAAI 34:13235--13240.
+- Blom, Conway, Stuckey, Teague (2020). [Did that lost ballot box cost me a seat? Computing manipulations of STV elections](https://doi.org/10.1609/aaai.v34i08.7029). *Proceedings of the AAAI Conference on Artificial Intelligence* 34(08):13235--13240.
 
 - Blom, Stuckey, Teague (2019). [Toward computing the margin of victory in single transferable vote elections](https://doi.org/10.1287/ijoc.2018.0853). *INFORMS Journal on Computing* 31(4):636--653.
 
 - Ek, Blom, Stark, Stuckey, Teague, Vukcevic (2026). [Doing more with less: Mismatch-based risk-limiting audits](https://doi.org/10.1007/978-3-032-00495-6_13). In: Financial Cryptography and Data Security. FC 2025 International Workshops. *Lecture Notes in Computer Science* 15754:241--255.
 
-- Teague, Conway (2022). [iVote issues: Assessment of potential impacts on the 2021 NSW local government elections](). In: E-Vote-ID 2022.
+- Teague, Conway (2022). [iVote issues: Assessment of potential impacts on the 2021 NSW local government elections](http://hdl.handle.net/10062/84432). In: E-Vote-ID 2022. Conference Proceedings, UT Press, pages 42--52.
+
 
 ## Image sources :framed_picture: {.smaller}
 
-TODO
+The [photograph of ballots from the Irish Election 2011](https://commons.wikimedia.org/wiki/File:Irish_Election_2011_-_The_Count_At_The_RDS.jpg) is by William Murphy (via Wikimedia Commons) and is licensed under [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/).
+
 
 # Appendix
 
