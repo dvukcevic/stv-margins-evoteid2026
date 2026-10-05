@@ -110,7 +110,7 @@ $$
 
 <!-- WIGM: Weighted inclusive Gregory method -->
 
-## STV example {.smaller}
+## STV example {#stv-example .smaller}
 
 ::::: columns
 ::: {.column width="35%"}
@@ -549,7 +549,7 @@ The **minimum** number of cast ballots that must be altered to **change** the se
 
 Also referred to as the '**margin**'
 
-## Motivation: Margin $\rightarrow$ Auditing
+## Motivation: Auditing
 
 ::::: columns
 ::: {.column .incremental width="60%"}
@@ -557,7 +557,7 @@ Also referred to as the '**margin**'
 
 - Statistical confidence in election outcomes
 
-- No universally efficient RLA method for all STV elections
+- No universally efficient RLAs for STV
 
 - Mismatch-based RLAs ([Ek et al. 2026](#references)) will work
 
@@ -593,28 +593,34 @@ Also referred to as the '**margin**'
 
 ::::: columns
 ::: {.column .incremental width="35%"}
-- **Election order prefix** ($\pi$):
+- **Election order prefix** ($\pi$)
 
   - E.g., $\pi = (C^+, E^+, A^-)$
 
-- **Prefix tree**:
+- **Prefix tree**
 
   - Root: empty sequence $()$
 
   - Branching: seat candidate $c^+$ or eliminate candidate $c^-$
+
+- **Strategy**
+
+  - Determine lower bound $lb$ to realise $\pi$
+  - Search across all $\pi$
 :::
 
 ::: {.column .incremental width="60%"}
-- **Best-first branch-and-bound**:
+- **Best-first branch-and-bound**
 
   - Maintain frontier $F$ of nodes $(lb, \pi)$, sorted by lower bound $lb$
 
     - Calculate $lb$ using **lower-bounding heuristics**
 
-  - Track **running upper limit** $rul$ (cheapest known outcome-changing manipulation)
+  - Track **running upper limit** $rul$\
+    (highest possible $lb$ across complete $\pi$)
 
     - Initialise $rul$ with an **upper bound**
-    - Update $rul$ using **complete** outcomes $\pi$ (fully expanded branches)
+    - Update $rul$ using **complete** alternate outcomes $\pi$ (fully expanded branches)
 
   - Prunes nodes where $lb \geqslant rul$
 
@@ -688,6 +694,10 @@ graph TD
 
 $rul = 75$
 
+::: callout-note
+### Initialise $rul$
+:::
+
 ## Tree traversal
 
 ```{mermaid}
@@ -724,6 +734,10 @@ graph TD
 ```
 
 $rul = 75$
+
+::: callout-note
+### Expand root
+:::
 
 ## Tree traversal
 
@@ -762,6 +776,12 @@ graph TD
 
 $rul = 75$
 
+::: callout-note
+### Prune $(B^+)$
+
+Since $lb \geqslant rul$
+:::
+
 ## Tree traversal
 
 ```{mermaid}
@@ -798,6 +818,12 @@ graph TD
 ```
 
 $rul = 75$
+
+::: callout-note
+### Expand $(A^+)$
+
+It has smallest $lb$
+:::
 
 ## Tree traversal
 
@@ -836,268 +862,290 @@ graph TD
 
 $rul = 75$
 
-## Lower-bounding heuristics {.smaller}
+::: callout-note
+### Prune $(A^+, B^+)$
 
-**Elimination lower bound**
+Since $lb \geqslant rul$
+:::
 
-- $l_{\text{elim}}(\pi, c) =$ Given $\pi$, minimum cost to keep eliminated candidate $c$ lowest, in the round when they should be eliminated
+## Lower-bounding heuristics
 
-**Quota lower bound**
+- **Elimination lower bound** $(l_{\pi, c}^{\text{elim}})$
 
-- $l_{\text{quota}}(\pi, c) =$ Given $\pi$, minimum cost to raise seated candidate $c$ to quota $Q$, in the round they should be seated
+  - Min cost to make candidate $c$ (eliminated in $\pi$) lowest
 
-**MINLP**
+- **Quota lower bound** $(l_{\pi, c}^{\text{quota}})$
 
-- Mixed-integer non-linear program (MINLP), with linear relaxations
-- Computes minimal manipulations given $\pi$
+  - Min cost to raise candidate $c$ (seated in $\pi$) to quota $Q$
+
+- **MINLP**
+
+  - Mixed-integer non-linear program (MINLP), with linear relaxations
+  - Computes minimal manipulations given $\pi$
 
 ## New advances (STV-26) {.smaller}
 
-- **Upper bounds:** Use `ConcreteSTV` heuristic for tighter initial $rul$
+<!-- TODO: change to a before/after table? -->
 
-- **Exact MINLPs:** Replaced linear relaxations with exact non-linear programs, and use **super-candidate relaxation**
+1.  **Upper bounds**
 
-- **Context-aware tally bounds:** Rigorous tracking of ballot piles ($B^{\text{must}}$, $B^{\text{maybe}}$) and transfer value ranges ($T^{\min}, T^{\max}$)
+    - Use `ConcreteSTV` heuristic for tighter initial $rul$
 
-- **New lower bounds:** Introduced **Displacement Lower Bound (**$l_{\text{disp}}$**)** to anticipate forced winner changes in future rounds
+2.  **Context-aware tally bounds**
 
-- **Pruning:** **Dominance Pruning** to detect and prune structurally equivalent search paths
+    - Rigorous tracking of ballot piles and transfer value ranges
+    - Improves bounding heuristics
 
-::: notes
-STV-26 introduces five key improvements over the BST-19 baseline. We integrate tight upper bounds, solve exact MINLPs with super-candidate relaxation, track context-aware ballot piles, introduce a new displacement lower bound l_disp, and apply dominance pruning. Let's look at each of these components in detail.
-:::
+3.  **New lower bounds**
 
-## 1. Upper bounds with ConcreteSTV {.smaller}
+    - Introduce **displacement lower bound** to anticipate forced winner changes in future rounds
 
-- **Role of the Running Upper Limit (**$rul$**):**
+4.  **Exact MINLPs**
 
-  - Defines global threshold for search tree pruning.
+    - Replace linear relaxations with exact non-linear programs
+    - Use **super-candidate relaxation**
 
-  - Any partial prefix requiring $\ge rul$ edits is immediately discarded.
+5.  **Dominance pruning**
 
-- **ConcreteSTV Integration:**
+    - Avoid equivalent search paths
 
-  - Performs local heuristic search for explicit, valid ballot modifications that alter winner set $W' \neq W$.
+## 1. Upper bounds {.smaller}
 
-  - Provides near-optimal initial upper bounds.
+Use `ConcreteSTV`
 
-- **Impact on Search:**
+- Finds small manipulations, tighter than BST-19
 
-  - A tighter initial $rul$ prunes vast subtrees at shallow depths before running expensive optimization solver calls.
+- Smaller initial $rul$
 
-::: notes
-Component 1 addresses the starting upper limit. BST-19 used loose initial upper bounds, which meant the algorithm spent hours expanding unviable subtrees before tightening the limit. By integrating ConcreteSTV, which searches for explicit ballot modifications, we start with a tight running limit right at the root.
-:::
+- Better pruning
+
+See [Blom et al. (2020)](#references) and [Teague & Conway (2022)](#references)
 
 ::: footer
 ConcreteSTV: <https://github.com/AndrewConway/ConcreteSTV>
 :::
 
-## 2. Exact MINLP solving & super-candidate relaxation {.smaller}
+## 2. Context-aware tally bounds {.smaller}
 
-- **Moving Beyond Linear Relaxations:**
+::: callout-note
+### Consecutive seatings $\Rightarrow$ ambiguity
 
-  - BST-19 linearized STV transfer rules, introducing loose bounds.
-
-  - STV-26 solves **exact Mixed-Integer Non-Linear Programs (MINLPs)** preserving true WIGM rules.
-
-- **Super-Candidate Relaxation (**$\tilde{\pi}$**):**
-
-  - Groups sequences of 3+ eliminated candidates into a single **super candidate** (e.g., $(B, E, F) \rightarrow BE$).
-
-  - Leaves the final candidate $c_n$ unmerged to prevent over-relaxation:
-
-    $$
-    \text{Original: } [(A, 0), (C, 1), (B, 0), (E, 0), (F, 0), (D, 1)]
-    $$
-
-    $$
-    \text{Relaxed } \tilde{\pi}: [(A, 0), (C, 1), (\mathbf{BE}, 0), (F, 0), (D, 1)]
-    $$
-
-- **Benefit:** Reduces optimization variables dramatically while maintaining exact non-linear transfer semantics.
-
-::: notes
-To make exact MINLP solving computationally tractable over long elimination sequences, we introduce Super-Candidate Relaxation. We merge internal sequences of eliminated candidates into a single super-candidate, leaving the last candidate separate. This drastically reduces the number of variables in the solver while preserving exact non-linear WIGM transfer value equations.
+- Votes *skip* candidates with quota
+- $\pi$ does *not* specify when quota is reached
 :::
 
-## 3. Context-aware tally bounds {.smaller}
+. . .
 
-- **Tracking Ballot Movements:**
+- **Ballot value ranges** $(B^{\min}_{\pi, b, r}, B^{\max}_{\pi, b, r})$
 
-  - $B^{\text{must}}_{\pi, c, r}$: Ballots that *definitely* reside in candidate $c$'s pile at round $r$.
+  - Bounds for value of ballot $b$ in round $r$
 
-  - $B^{\text{maybe}}_{\pi, c, r}$: Ballots that *could possibly* reside in candidate $c$'s pile at round $r$.
+. . .
 
-- **Transfer Value Ranges:**
+- **Transfer value ranges** $(T^{\min}_{\pi, c, r}, T^{\max}_{\pi, c, r})$
 
-  $$
-  T^{\min}_{\pi, c, r} = \frac{\max(Q, V^{\min}) - Q}{\max(Q, V^{\min})}, \quad T^{\max}_{\pi, c, r} = \frac{\max(Q, V^{\max}) - Q}{\max(Q, V^{\max})}
-  $$
+  - Bounds for transfer value from candidate $c$ when seated in round $r$
+  - BST-19 (old method) assumed values of 0 and 1!
 
-- **Example (from Running Example):**
+. . .
 
-  - Candidate $D$ at Round 3 under $\pi = [(C, 1), (E, 1), (A, 0)]$:
+- **Tally bounds** $(V^{\min}_{\pi, c, r}, V^{\max}_{\pi, c, r})$
 
-  - $V^{\min}_{\pi, D, 3} = 163.63$ votes vs. $V^{\max}_{\pi, D, 3} = 201.96$ votes.
+  - Bounds for $c$'s tally in round $r$
 
-  - Previous BST-19 bounds coarsely assumed ballot values of 0 or 1!
+## 2. Context-aware tally bounds {.smaller}
 
-::: notes
-When multiple seatings occur in sequence, exact ballot locations depend on candidate quota timing. STV-26 tracks B_must and B_maybe sets along with upper and lower bounds on transfer values T_min and T_max. In our running example, candidate D's tally is bounded tightly between 163.63 and 201.96, whereas BST-19 coarsely assumed ballot values between 0 and 1.
-:::
+[Example](#stv-example), consider $\pi = (C^+, E^+, A^-)$
 
-## 4. Lower bounds {.smaller}
+. . .
 
-- **Elimination Lower Bound (**$l_{\text{elim}}$**):** Min cost to keep eliminated candidate lowest.
+Votes for $E$ in round 2:
 
-  $$
-  l_{\text{elim}}(\pi, c) = \max_{c' \in S_{\pi, r} \setminus \{c\}} \left( \frac{V^{\min}_{\pi, c, r} - V^{\max}_{\pi, c', r}}{2} \right)^+
-  $$
+- $V^{\min}_{\pi, E, 2} = 350$ votes (if the $[C, E, D]$ ballots skip $E$)
+- $V^{\max}_{\pi, E, 2} = 393.57$ votes (no skipping)
 
-- **Quota Lower Bound (**$l_{\text{quota}}$**):** Min cost to raise seated candidate to quota $Q$.
-
-  $$
-  l_{\text{quota}}(\pi, c) = (Q - V^{\max}_{\pi, c, r})^+
-  $$
-
-- **Displacement Lower Bound (**$l_{\text{disp}}$**) --- NEW:**
-
-  - Evaluates future rounds beyond prefix $\pi$.
-
-  - Forces at least one reported loser $c \in L_\pi$ to displace a reported winner $w \in W$:
-
-    $$
-    l_{\text{disp}}(\pi) = \min_{c \in L_\pi} \max \left\{ \text{DispCost}_{\pi, c}, \min(\text{QuotaCost}_{\pi, c}, \text{LeftAtEndCost}_{\pi, c}) \right\}
-    $$
-
-::: notes
-For every node in the search tree, we compute elimination, quota, and displacement lower bounds. The key addition in STV-26 is l_disp. Even if a prefix matches early reported rounds with 0 cost, l_disp looks ahead to future rounds to determine the minimum edits needed for a standing loser to displace a standing winner later in tabulation.
-:::
-
-## 5. Dominance pruning {.smaller}
-
-- **Core Observation:**
-
-  - Multiple distinct search paths lead to identical super-candidate relaxed states ($\tilde{\pi} \equiv \tilde{\pi}'$).
-
-- **Dominance Rule:**
-
-  - Node $(l, \pi)$ is **dominated** by node $(l', \pi')$ if $\tilde{\pi} \equiv \tilde{\pi}'$ and $l' \le l$.
-
-  - If an equivalent path with a smaller or equal bound has already been explored or exists in frontier $F$, **discard** $(l, \pi)$ **immediately**.
-
-- **Why It Works:**
-
-  - Future MINLPs built on top of $\pi$ and $\pi'$ are identical.
-
-  - Eliminates duplicate subtree expansions before calling expensive MINLP solvers.
-
-::: notes
-Dominance pruning is a major speedup factor in STV-26. Different permutation paths often resolve to the exact same relaxed super-candidate structure pi-tilde. If we have already evaluated a path with the same relaxed structure and a lower bound, any future extension will yield an identical MINLP optimization problem. We can safely discard the higher-cost duplicate node immediately.
-:::
-
-# Results
-
-## BST-19 re-implemented
-
-Understanding the difference between the published baseline and our re-implementation:
+. . .
 
 ::::: columns
 ::: {.column width="50%"}
-### BST-19 (Blom et al., 2019)
+Transfer value from $E$:
 
-- **Ruleset:** Australian Senate rules (fractional surplus handling differs on subsequent transfers).
-- **Environment:** Original 2019 codebase and hardware.
-- **Timeout:** 12 hours (43,200s).
-- **Pruning & MINLP:** Linearized MINLP relaxation; older lower-bounding heuristics.
+- $T^{\min}_{\pi, E, 2} = 0.12$ (not 0!)
+- $T^{\max}_{\pi, E, 2} = 0.22$ (not 1!)
 :::
 
 ::: {.column width="50%"}
-### BST-19\* (Re-implementation)
+Votes for $D$ in round 3:
 
-- **Ruleset:** Weighted Inclusive Gregory Method (WIGM). Equivalent to Senate rules for 2-seat contests.
-- **Environment:** Modern 32 vCPU, 128 GB RAM server with 30-node parallelization.
-- **Timeout:** 10,000s.
-- **Purpose:** Isolates hardware/solver gains vs. new algorithmic contributions in **STV-26**.
+- $V^{\min}_{\pi, D, 3} = 163.66$ votes
+- $V^{\max}_{\pi, D, 3} = 202$ votes
 :::
 :::::
 
-::: notes
-Why distinguish BST-19 from BST-19*? BST-19* uses the exact same algorithmic principles as BST-19, but runs on modern hardware with parallelization and aligned WIGM rules. Comparing BST-19\* to STV-26 allows us to isolate the pure benefit of our new algorithmic contributions (direct MINLP solving, displacement bounds, dominance pruning) from raw compute power improvements.
+## 3. Lower bounds {.smaller}
+
+As before, but with better tallies:
+
+- Elimination lower bound
+- Quota lower bound
+
+. . .
+
+New:
+
+- **Displacement lower bound** ($l_{\pi}^{\text{disp}}$)
+
+  - Evaluates *future* rounds, beyond prefix $\pi$
+
+  - Min cost to make at least one reported loser $c \in \overline{W}$ displace a reported winner $w \in W$
+
+  - Useful when $\pi$ matches reported sequence, otherwise $l_{\pi}^{\text{disp}} = 0$
+
+## 4. Exact MINLPs {.smaller}
+
+- **No linear relaxations**
+
+  - BST-19 linearised STV transfer rules (looser bounds)
+  - STV-26 solves **exact** MINLPs (tighter bounds)
+
+. . .
+
+- **Super-candidate relaxation** ($\tilde{\pi}$)
+
+  - Sequences of 3+ eliminated candidates grouped into a single **super-candidate**\
+    (e.g., $(B, E, F) \rightarrow BE$)
+
+  - The final candidate in sequence is unmerged, to prevent over-relaxation
+
+    $$\text{Original } \pi: (A^-, C^+, B^-, E^-, F^-, D^+)$$ $$\text{Relaxed } \tilde{\pi}: (A^-, C^+, \mathbf{BE}^-, F^-, D^+)$$
+
+. . .
+
+- **Benefit**: many fewer optimisation variables while maintaining non-linearity
+
+- Particularly useful when there are many weak candidates
+
+## 5. Dominance pruning
+
+::::: columns
+::: {.column .incremental width="50%"}
+- Distinct nodes with identical relaxed states:
+
+  - Node $(l, \pi)$
+  - Node $(l', \pi')$
+  - $\tilde{\pi} \equiv \tilde{\pi}'$
 :::
+
+::: {.column .incremental width="50%"}
+- **Dominance rule**:
+
+  - If $l' \leqslant l$ then discard $(l, \pi)$ immediately
+
+- Eliminates duplicate subtree expansions
+:::
+:::::
+
+## STV-26 workflow
+
+TODO
+
+# Results
+
+## BST-19 re-implemented {.smaller}
+
+|   | BST-19 | BST-19\* |
+|------------------|---------------------------|---------------------------|
+| **Source** | [Blom et al. (2019)](#references) | Our re-implementation |
+| **Ruleset** | Australian Senate | Weighted inclusive Gregory method (WIGM) |
+| **Environment** | 2019 codebase and hardware | Modern 32 vCPU, 128 GB RAM, 30-node parallelisation |
+| **Timeout** | 12 hours (43,200 s) | 10,000 s |
+
+. . .
+
+\
+
+**Goal**: isolate hardware/solver gains vs. new algorithmic contributions in **STV-26**
+
+. . .
+
+BST-19\* already improves on BST-19!
 
 ## Small & medium elections {.smaller}
 
 | **Election** | **Seats** | **Candidates** | **Ballots** | **UB** | **BST-19\* LB** | **STV-26 LB** | **BST-19\* Time** | **STV-26 Time** |
 |:-------|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|
-| **MN BET '17** | 2 | 4 | 48,163 | 16,863 | 16,863 | **16,863** | 0.31 s | **0.10 s** |
-| **Glasgow (Springburn)** | 3 | 10 | 5,410 | 528 | 505 | **528** | 10 ks | **441 s** |
-| **Glasgow (Shettleston)** | 4 | 11 | 8,803 | 353 | 270 | **353** | 10 ks | **6,170 s** |
-| **Dublin North** | 4 | 13 | 43,942 | 211 | 211 | **211** | 165s | **174 s** |
+| **MN BET '17** | 2 | 4 | 48,163 | 16,863 | 16,863 | 16,863 | 0.31 s | **0.10 s** |
+| **Glasgow (Linn)** | 4 | 11 | 9,567 | 218 | 218 | 218 | 287 s | **82 s** |
+| **Glasgow (Springburn)** | 3 | 10 | 5,410 | 528 | 505 | **528** | *10 ks* | **441 s** |
+| **Glasgow (Shettleston)** | 4 | 11 | 8,803 | 353 | 270 | **353** | *10 ks* | **6,170 s** |
+| **Dublin North** | 4 | 13 | 43,942 | 211 | 211 | 211 | **165 s** | 174 s |
 
-**Key Takeaway:** STV-26 proves **exact margins** (LB = UB) in seconds to minutes for Scottish, US, and Irish contests where previous methods timed out (\>10,000s).
+\
 
-## Australian Senate
+LB = UB $\Rightarrow$ **exact** margin
 
-| **Election** | **UB** | **BST-19\* LB** | **STV-26 LB** | **STV-26 Runtime** |
-|:-------------|-------:|----------------:|--------------:|-------------------:|
-| **ACT 2016** | 18,835 |             343 |     **9,162** |              10 ks |
-| **ACT 2019** | 12,939 |           1,635 |     **9,933** |              10 ks |
-| **NT 2013**  |  2,298 |             212 | **(!) 2,298** |         **1.12 s** |
-| **NT 2016**  | 11,244 |           3,120 |     **7,438** |              10 ks |
-| **NT 2022**  | 11,412 |             474 |     **5,092** |              10 ks |
+## Australian Senate {.smaller}
 
-```{=html}
-<!--
-* **10 Multi-Candidate 2-Seat Contests** (14–27 candidates, up to 293k ballots):
+| **Election** | **Seats** | **Candidates** | **Ballots** | **UB** | **BST-19\* LB** | **STV-26 LB** | **BST-19\* Time** | **STV-26 Time** |
+|:-------|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|
+| **ACT 2013** | 2 | 27 | 246,742 | 13,391 | 80 | **2,155** | *10 ks* | *10 ks* |
+| **ACT 2016** | 2 | 22 | 254,767 | 18,835 | 343 | **9,162** | *10 ks* | *10 ks* |
+| **ACT 2019** | 2 | 17 | 95,749 | 12,939 | 1,635 | **9,933** | *10 ks* | *10 ks* |
+| **NT 2013** | 2 | 24 | 102,027 | 2,298 | 212 | **(!) 2,298** | *10 ks* | **1.12 s** |
+| **NT 2016** | 2 | 19 | 102,027 | 11,244 | 3,120 | **7,438** | *10 ks* | *10 ks* |
+| **NT 2019** | 2 | 18 | 37,869 | 15,890 | 3,563 | **9,322** | *10 ks* | *10 ks* |
 
-* **Substantial Progress:** Lower bounds increased by **up to 10–20x** over BST-19\*.
--->
-```
+## Practical impact on audits {.smaller}
 
-## Practical impact on audits
+Example: **Northern Territory (NT) 2022 Election**
 
-- **Case study: Northern Territory (NT) 2022 Election**
+- Old lower bound (BST-19\*) = 474
+- New lower bound (STV-26) = 5,092
 
-  - Reported Upper Bound: 11,412 \| Old Bound (BST-19\*): 474 \| **STV-26 Bound: 5,092**
+. . .
 
-- **Impact on Mismatch-Based RLA Sample Sizes:**
+\
 
-| **Assumed Ballot Mismatch Rate** | **Audit Sample Size (Old Bound = 474)** | **Audit Sample Size (STV-26 Bound = 5,092)** |
-|:-----------------------|-----------------------:|-----------------------:|
-| **0.1% Mismatch Rate** | \> 1,000 ballots | **\~ 55 ballots** |
-| **1.0% Mismatch Rate** | \~ 100,000 ballots | **\~ 106 ballots** |
+| Ballot mismatch rate | Audit sample size (BST-19\*) | Audit sample size (STV-26) |
+|:----------------|----------------------:|----------------------:|
+| 0.1% |   \~ 1,000 ballots |  **\~ 55 ballots** |
+| 1.0% | \~ 100,000 ballots | **\~ 106 ballots** |
 
-- **Result:** STV-26 turns an impossible manual audit of 100,000 ballots into a practical check of **106 ballots**.
-
-## Summary
-
-- Contributions:
-
-  - Exact MINLP solving with super-candidate relaxation.
-
-  - Context-aware tally bounds ($B^{\text{must}}, B^{\text{maybe}}$) and displacement bound $l_{\text{disp}}$.
-
-  - Dominance pruning to eliminate redundant search branches.
-
-  - Proven exact margins internationally and up to **20x higher bounds** in Australia.
-
-- **Open-source implementation:** <https://github.com/michelleblom/pymarginstv>
+: Expected impact on mismatch-based RLA
 
 ## Future directions
 
-- Scaling to large 6–12 seat Australian Senate elections (100+ candidates).
+- Scaling to large 6--12 seat elections, with 100+ candidates
 
-- Extending bounds to alternative STV variants (e.g., Meek's method).
+- Extending to alternative STV variants (e.g., Meek)
 
 # Questions?
 
+## Download
+
+<!-- TODO: add QR code with this page's URL -->
+
+Slides :desktop_computer: <https://dvukcevic.github.io/stv-margins-evoteid2026/>
+
+Paper :bookmark_tabs: <https://arxiv.org/abs/2607.21178>
+
+Software :minidisc: <https://github.com/michelleblom/pymarginstv>
+
 ## References :books: {#references .smaller}
+
+<!-- TODO: Update info for references -->
+
+- Blom, Conway, Stuckey, Teague (2020). [Did that lost ballot box cost me a seat? Computing manipulations of STV elections](). In: AAAI 34:13235--13240.
 
 - Blom, Stuckey, Teague (2019). [Toward computing the margin of victory in single transferable vote elections](https://doi.org/10.1287/ijoc.2018.0853). *INFORMS Journal on Computing* 31(4):636--653.
 
 - Ek, Blom, Stark, Stuckey, Teague, Vukcevic (2026). [Doing more with less: Mismatch-based risk-limiting audits](https://doi.org/10.1007/978-3-032-00495-6_13). In: Financial Cryptography and Data Security. FC 2025 International Workshops. *Lecture Notes in Computer Science* 15754:241--255.
+
+- Teague, Conway (2022). [iVote issues: Assessment of potential impacts on the 2021 NSW local government elections](). In: E-Vote-ID 2022.
+
+## Image sources :framed_picture: {.smaller}
+
+TODO
 
 # Appendix
 
