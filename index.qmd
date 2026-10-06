@@ -550,7 +550,7 @@ Quota: $Q = \text{308}$
 ::: callout-note
 ### Margin of victory
 
-The **minimum** number of cast ballots that must be altered to **change** the set of elected winners $W$.
+The **minimum** number of cast ballots that must be altered to **change** the set of elected winners $W$
 :::
 
 . . .
@@ -1097,7 +1097,7 @@ LB = UB $\Rightarrow$ **exact** margin
 ## Australian Senate {.smaller}
 
 | **Election** | **Seats** | **Candidates** | **Ballots** | **UB** | **BST-19\* LB** | **STV-26 LB** | **BST-19\* Time** | **STV-26 Time** |
-|:-------|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|
+|:--------|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|
 | **ACT 2013** | 2 | 27 | 246,742 | 13,391 | 80 | **2,155** | *10 ks* | *10 ks* |
 | **ACT 2016** | 2 | 22 | 254,767 | 18,835 | 343 | **9,162** | *10 ks* | *10 ks* |
 | **ACT 2019** | 2 | 17 | 95,749 | 12,939 | 1,635 | **9,933** | *10 ks* | *10 ks* |
