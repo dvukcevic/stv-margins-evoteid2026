@@ -17,9 +17,26 @@ format:
 
 # Overview
 
-## Overview
+## TL;DR :fast_forward:
 
-TODO
+STV elections are complex
+
+. . .
+
+"How close is the election?" (**margin**)
+
+- Unsolved in general
+- Progress on **tighter lower bounds**
+
+. . .
+
+Margins $\longrightarrow$ audits
+
+Now feasible for medium-sized STV elections
+
+- 2-seat, 20 candidates
+- 4-seat, 10 candidates
+
 
 ## Acknowledgements :moneybag:
 
