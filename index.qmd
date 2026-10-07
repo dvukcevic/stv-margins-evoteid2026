@@ -600,26 +600,12 @@ Also referred to as the '**margin**'
 :::
 :::::
 
-## Why is calculating STV margins hard?
-
-1.  Elimination cascades
-
-    - Small early changes can trigger large changes later.
-
-2.  Non-monotonicity
-
-    - Adding votes to $E$ can cause $E$'s preferred ally to lose.
-
-3.  Non-linearity
-
-    - $\tau$ depends non-linearly on the vote tallies.
-
 # Margin calculation algorithms
 
 ## Existing method (BST-19) {.smaller}
 
 ::::: columns
-::: {.column .incremental width="35%"}
+::: {.column width="35%"}
 - **Election order prefix** ($\pi$)
 
   - E.g., $\pi = (C^+, E^+, A^-)$
@@ -636,7 +622,7 @@ Also referred to as the '**margin**'
   - Search across all $\pi$
 :::
 
-::: {.column .incremental width="60%"}
+::: {.column width="60%"}
 - **Best-first branch-and-bound**
 
   - Maintain frontier $F$ of nodes $(lb, \pi)$, sorted by lower bound $lb$
@@ -687,8 +673,6 @@ graph TD
 ```
 
 ## Tree traversal
-
-<!-- TODO: Use multi-line nodes: lb \n pi -->
 
 ```{mermaid}
 graph TD
@@ -911,8 +895,6 @@ Since $lb \geqslant rul$
   - Computes minimal manipulations given $\pi$
 
 ## New advances (STV-26) {.smaller}
-
-<!-- TODO: change to a before/after table? -->
 
 1.  **Upper bounds**
 
@@ -1191,4 +1173,16 @@ The [photograph of ballots from the Irish Election 2011](https://commons.wikimed
 
 # Appendix
 
-TODO
+## Why is calculating STV margins hard?
+
+1.  Elimination cascades
+
+    - Small early changes can trigger large changes later.
+
+2.  Non-monotonicity
+
+    - Adding votes to $E$ can cause $E$'s preferred ally to lose.
+
+3.  Non-linearity
+
+    - $\tau$ depends non-linearly on the vote tallies.
