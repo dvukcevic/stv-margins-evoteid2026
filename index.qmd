@@ -1072,9 +1072,23 @@ New:
 :::
 :::::
 
-## STV-26 workflow
+## STV-26 workflow (per node)
 
-TODO
+- Dominance check
+
+    - **Discard** if dominated
+
+- Calculate min/max tallies
+
+- Calculate fast bounds (elimination, quota, displacement)
+
+    - **Prune** if $lb \geqslant rul$
+
+- Solve MINLP
+
+    - **Prune** if $lb \geqslant rul$
+
+- Expand next node...
 
 # Results
 

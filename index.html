@@ -2102,9 +2102,24 @@ Q = \left\lfloor \frac{\text{\# ballots}}{\text{\# seats} + 1} \right\rfloor + 1
 </ul>
 </div></div>
 </section>
-<section id="stv-26-workflow" class="slide level2">
-<h2>STV-26 workflow</h2>
-<p>TODO</p>
+<section id="stv-26-workflow-per-node" class="slide level2">
+<h2>STV-26 workflow (per node)</h2>
+<ul>
+<li><p>Dominance check</p>
+<ul>
+<li><strong>Discard</strong> if dominated</li>
+</ul></li>
+<li><p>Calculate min/max tallies</p></li>
+<li><p>Calculate fast bounds (elimination, quota, displacement)</p>
+<ul>
+<li><strong>Prune</strong> if <span class="math inline">lb \geqslant rul</span></li>
+</ul></li>
+<li><p>Solve MINLP</p>
+<ul>
+<li><strong>Prune</strong> if <span class="math inline">lb \geqslant rul</span></li>
+</ul></li>
+<li><p>Expand next node…</p></li>
+</ul>
 </section></section>
 <section>
 <section id="results" class="title-slide slide level1 center">
