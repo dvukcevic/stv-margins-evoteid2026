@@ -1930,177 +1930,6 @@ Q = \left\lfloor \frac{\text{\# ballots}}{\text{\# seats} + 1} \right\rfloor + 1
 <li>Avoid equivalent search paths</li>
 </ul></li>
 </ol>
-</section>
-<section id="upper-bounds" class="slide level2 smaller">
-<h2>1. Upper bounds</h2>
-<p>Use <code>ConcreteSTV</code></p>
-<ul>
-<li><p>Finds small manipulations, tighter than BST-19</p></li>
-<li><p>Smaller initial <span class="math inline">rul</span></p></li>
-<li><p>Better pruning</p></li>
-</ul>
-<p>See <a href="#/references">Blom et al.&nbsp;(2020)</a> and <a href="#/references">Teague &amp; Conway (2022)</a></p>
-<div class="footer">
-<p>ConcreteSTV: <a href="https://github.com/AndrewConway/ConcreteSTV" class="uri">https://github.com/AndrewConway/ConcreteSTV</a></p>
-</div>
-</section>
-<section id="context-aware-tally-bounds" class="slide level2 smaller">
-<h2>2. Context-aware tally bounds</h2>
-<div class="callout callout-note callout-titled callout-style-default">
-<div class="callout-body">
-<div class="callout-title">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<p><strong>Consecutive seatings <span class="math inline">\Rightarrow</span> ambiguity</strong></p>
-</div>
-<div class="callout-content">
-<ul>
-<li>Votes <em>skip</em> candidates with quota</li>
-<li><span class="math inline">\pi</span> does <em>not</em> specify when quota is reached</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="fragment">
-<ul>
-<li><p><strong>Ballot value ranges</strong> <span class="math inline">(B^{\min}_{\pi, b, r}, B^{\max}_{\pi, b, r})</span></p>
-<ul>
-<li>Bounds for value of ballot <span class="math inline">b</span> in round <span class="math inline">r</span></li>
-</ul></li>
-</ul>
-</div>
-<div class="fragment">
-<ul>
-<li><p><strong>Transfer value ranges</strong> <span class="math inline">(T^{\min}_{\pi, c, r}, T^{\max}_{\pi, c, r})</span></p>
-<ul>
-<li>Bounds for transfer value from candidate <span class="math inline">c</span> when seated in round <span class="math inline">r</span></li>
-<li>BST-19 (old method) assumed values of 0 and 1!</li>
-</ul></li>
-</ul>
-</div>
-<div class="fragment">
-<ul>
-<li><p><strong>Tally bounds</strong> <span class="math inline">(V^{\min}_{\pi, c, r}, V^{\max}_{\pi, c, r})</span></p>
-<ul>
-<li>Bounds for <span class="math inline">c</span>’s tally in round <span class="math inline">r</span></li>
-</ul></li>
-</ul>
-</div>
-</section>
-<section id="context-aware-tally-bounds-1" class="slide level2 smaller">
-<h2>2. Context-aware tally bounds</h2>
-<p><a href="#/stv-example">Example</a>, consider <span class="math inline">\pi = (C^+, E^+, A^-)</span></p>
-<div class="fragment">
-<p>Votes for <span class="math inline">E</span> in round 2:</p>
-<ul>
-<li><span class="math inline">V^{\min}_{\pi, E, 2} = 350</span> votes (if the <span class="math inline">[C, E, D]</span> ballots skip <span class="math inline">E</span>)</li>
-<li><span class="math inline">V^{\max}_{\pi, E, 2} = 393.57</span> votes (no skipping)</li>
-</ul>
-</div>
-<div class="fragment">
-<div class="columns">
-<div class="column" style="width:50%;">
-<p>Transfer value from <span class="math inline">E</span>:</p>
-<ul>
-<li><span class="math inline">T^{\min}_{\pi, E, 2} = 0.12</span> (not 0!)</li>
-<li><span class="math inline">T^{\max}_{\pi, E, 2} = 0.22</span> (not 1!)</li>
-</ul>
-</div><div class="column" style="width:50%;">
-<p>Votes for <span class="math inline">D</span> in round 3:</p>
-<ul>
-<li><span class="math inline">V^{\min}_{\pi, D, 3} = 163.66</span> votes</li>
-<li><span class="math inline">V^{\max}_{\pi, D, 3} = 202</span> votes</li>
-</ul>
-</div></div>
-</div>
-</section>
-<section id="lower-bounds" class="slide level2 smaller">
-<h2>3. Lower bounds</h2>
-<p>As before, but with better tallies:</p>
-<ul>
-<li>Elimination lower bound</li>
-<li>Quota lower bound</li>
-</ul>
-<div class="fragment">
-<p>New:</p>
-<ul>
-<li><p><strong>Displacement lower bound</strong> (<span class="math inline">l_{\pi}^{\text{disp}}</span>)</p>
-<ul>
-<li><p>Evaluates <em>future</em> rounds, beyond prefix <span class="math inline">\pi</span></p></li>
-<li><p>Min cost to make at least one reported loser <span class="math inline">c \in \overline{W}</span> displace a reported winner <span class="math inline">w \in W</span></p></li>
-<li><p>Useful when <span class="math inline">\pi</span> matches reported sequence, otherwise <span class="math inline">l_{\pi}^{\text{disp}} = 0</span></p></li>
-</ul></li>
-</ul>
-</div>
-</section>
-<section id="exact-minlps" class="slide level2 smaller">
-<h2>4. Exact MINLPs</h2>
-<ul>
-<li><p><strong>No linear relaxations</strong></p>
-<ul>
-<li>BST-19 linearised STV transfer rules (looser bounds)</li>
-<li>STV-26 solves <strong>exact</strong> MINLPs (tighter bounds)</li>
-</ul></li>
-</ul>
-<div class="fragment">
-<ul>
-<li><p><strong>Super-candidate relaxation</strong> (<span class="math inline">\tilde{\pi}</span>)</p>
-<ul>
-<li><p>Sequences of 3+ eliminated candidates grouped into a single <strong>super-candidate</strong><br>
-(e.g., <span class="math inline">(B, E, F) \rightarrow BE</span>)</p></li>
-<li><p>The final candidate in sequence is unmerged, to prevent over-relaxation</p>
-<p><span class="math display">\text{Original } \pi: (A^-, C^+, B^-, E^-, F^-, D^+)</span> <span class="math display">\text{Relaxed } \tilde{\pi}: (A^-, C^+, \mathbf{BE}^-, F^-, D^+)</span></p></li>
-</ul></li>
-</ul>
-</div>
-<div class="fragment">
-<ul>
-<li><p><strong>Benefit</strong>: many fewer optimisation variables while maintaining non-linearity</p></li>
-<li><p>Particularly useful when there are many weak candidates</p></li>
-</ul>
-</div>
-</section>
-<section id="dominance-pruning" class="slide level2">
-<h2>5. Dominance pruning</h2>
-<div class="columns">
-<div class="column" style="width:50%;">
-<ul>
-<li class="fragment"><p>Distinct nodes with identical relaxed states:</p>
-<ul>
-<li class="fragment">Node <span class="math inline">(l, \pi)</span></li>
-<li class="fragment">Node <span class="math inline">(l', \pi')</span></li>
-<li class="fragment"><span class="math inline">\tilde{\pi} \equiv \tilde{\pi}'</span></li>
-</ul></li>
-</ul>
-</div><div class="column" style="width:50%;">
-<ul>
-<li class="fragment"><p><strong>Dominance rule</strong>:</p>
-<ul>
-<li class="fragment">If <span class="math inline">l' \leqslant l</span> then discard <span class="math inline">(l, \pi)</span> immediately</li>
-</ul></li>
-<li class="fragment"><p>Eliminates duplicate subtree expansions</p></li>
-</ul>
-</div></div>
-</section>
-<section id="stv-26-workflow-per-node" class="slide level2">
-<h2>STV-26 workflow (per node)</h2>
-<ul>
-<li><p>Dominance check</p>
-<ul>
-<li><strong>Discard</strong> if dominated</li>
-</ul></li>
-<li><p>Calculate min/max tallies</p></li>
-<li><p>Calculate fast bounds (elimination, quota, displacement)</p>
-<ul>
-<li><strong>Prune</strong> if <span class="math inline">lb \geqslant rul</span></li>
-</ul></li>
-<li><p>Solve MINLP</p>
-<ul>
-<li><strong>Prune</strong> if <span class="math inline">lb \geqslant rul</span></li>
-</ul></li>
-<li><p>Expand next node…</p></li>
-</ul>
 </section></section>
 <section>
 <section id="results" class="title-slide slide level1 center">
@@ -2427,6 +2256,177 @@ Q = \left\lfloor \frac{\text{\# ballots}}{\text{\# seats} + 1} \right\rfloor + 1
 <li><span class="math inline">\tau</span> depends non-linearly on the vote tallies.</li>
 </ul></li>
 </ol>
+</section>
+<section id="upper-bounds" class="slide level2 smaller">
+<h2>1. Upper bounds</h2>
+<p>Use <code>ConcreteSTV</code></p>
+<ul>
+<li><p>Finds small manipulations, tighter than BST-19</p></li>
+<li><p>Smaller initial <span class="math inline">rul</span></p></li>
+<li><p>Better pruning</p></li>
+</ul>
+<p>See <a href="#/references">Blom et al.&nbsp;(2020)</a> and <a href="#/references">Teague &amp; Conway (2022)</a></p>
+<div class="footer">
+<p>ConcreteSTV: <a href="https://github.com/AndrewConway/ConcreteSTV" class="uri">https://github.com/AndrewConway/ConcreteSTV</a></p>
+</div>
+</section>
+<section id="context-aware-tally-bounds" class="slide level2 smaller">
+<h2>2. Context-aware tally bounds</h2>
+<div class="callout callout-note callout-titled callout-style-default">
+<div class="callout-body">
+<div class="callout-title">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<p><strong>Consecutive seatings <span class="math inline">\Rightarrow</span> ambiguity</strong></p>
+</div>
+<div class="callout-content">
+<ul>
+<li>Votes <em>skip</em> candidates with quota</li>
+<li><span class="math inline">\pi</span> does <em>not</em> specify when quota is reached</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="fragment">
+<ul>
+<li><p><strong>Ballot value ranges</strong> <span class="math inline">(B^{\min}_{\pi, b, r}, B^{\max}_{\pi, b, r})</span></p>
+<ul>
+<li>Bounds for value of ballot <span class="math inline">b</span> in round <span class="math inline">r</span></li>
+</ul></li>
+</ul>
+</div>
+<div class="fragment">
+<ul>
+<li><p><strong>Transfer value ranges</strong> <span class="math inline">(T^{\min}_{\pi, c, r}, T^{\max}_{\pi, c, r})</span></p>
+<ul>
+<li>Bounds for transfer value from candidate <span class="math inline">c</span> when seated in round <span class="math inline">r</span></li>
+<li>BST-19 (old method) assumed values of 0 and 1!</li>
+</ul></li>
+</ul>
+</div>
+<div class="fragment">
+<ul>
+<li><p><strong>Tally bounds</strong> <span class="math inline">(V^{\min}_{\pi, c, r}, V^{\max}_{\pi, c, r})</span></p>
+<ul>
+<li>Bounds for <span class="math inline">c</span>’s tally in round <span class="math inline">r</span></li>
+</ul></li>
+</ul>
+</div>
+</section>
+<section id="context-aware-tally-bounds-1" class="slide level2 smaller">
+<h2>2. Context-aware tally bounds</h2>
+<p><a href="#/stv-example">Example</a>, consider <span class="math inline">\pi = (C^+, E^+, A^-)</span></p>
+<div class="fragment">
+<p>Votes for <span class="math inline">E</span> in round 2:</p>
+<ul>
+<li><span class="math inline">V^{\min}_{\pi, E, 2} = 350</span> votes (if the <span class="math inline">[C, E, D]</span> ballots skip <span class="math inline">E</span>)</li>
+<li><span class="math inline">V^{\max}_{\pi, E, 2} = 393.57</span> votes (no skipping)</li>
+</ul>
+</div>
+<div class="fragment">
+<div class="columns">
+<div class="column" style="width:50%;">
+<p>Transfer value from <span class="math inline">E</span>:</p>
+<ul>
+<li><span class="math inline">T^{\min}_{\pi, E, 2} = 0.12</span> (not 0!)</li>
+<li><span class="math inline">T^{\max}_{\pi, E, 2} = 0.22</span> (not 1!)</li>
+</ul>
+</div><div class="column" style="width:50%;">
+<p>Votes for <span class="math inline">D</span> in round 3:</p>
+<ul>
+<li><span class="math inline">V^{\min}_{\pi, D, 3} = 163.66</span> votes</li>
+<li><span class="math inline">V^{\max}_{\pi, D, 3} = 202</span> votes</li>
+</ul>
+</div></div>
+</div>
+</section>
+<section id="lower-bounds" class="slide level2 smaller">
+<h2>3. Lower bounds</h2>
+<p>As before, but with better tallies:</p>
+<ul>
+<li>Elimination lower bound</li>
+<li>Quota lower bound</li>
+</ul>
+<div class="fragment">
+<p>New:</p>
+<ul>
+<li><p><strong>Displacement lower bound</strong> (<span class="math inline">l_{\pi}^{\text{disp}}</span>)</p>
+<ul>
+<li><p>Evaluates <em>future</em> rounds, beyond prefix <span class="math inline">\pi</span></p></li>
+<li><p>Min cost to make at least one reported loser <span class="math inline">c \in \overline{W}</span> displace a reported winner <span class="math inline">w \in W</span></p></li>
+<li><p>Useful when <span class="math inline">\pi</span> matches reported sequence, otherwise <span class="math inline">l_{\pi}^{\text{disp}} = 0</span></p></li>
+</ul></li>
+</ul>
+</div>
+</section>
+<section id="exact-minlps" class="slide level2 smaller">
+<h2>4. Exact MINLPs</h2>
+<ul>
+<li><p><strong>No linear relaxations</strong></p>
+<ul>
+<li>BST-19 linearised STV transfer rules (looser bounds)</li>
+<li>STV-26 solves <strong>exact</strong> MINLPs (tighter bounds)</li>
+</ul></li>
+</ul>
+<div class="fragment">
+<ul>
+<li><p><strong>Super-candidate relaxation</strong> (<span class="math inline">\tilde{\pi}</span>)</p>
+<ul>
+<li><p>Sequences of 3+ eliminated candidates grouped into a single <strong>super-candidate</strong><br>
+(e.g., <span class="math inline">(B, E, F) \rightarrow BE</span>)</p></li>
+<li><p>The final candidate in sequence is unmerged, to prevent over-relaxation</p>
+<p><span class="math display">\text{Original } \pi: (A^-, C^+, B^-, E^-, F^-, D^+)</span> <span class="math display">\text{Relaxed } \tilde{\pi}: (A^-, C^+, \mathbf{BE}^-, F^-, D^+)</span></p></li>
+</ul></li>
+</ul>
+</div>
+<div class="fragment">
+<ul>
+<li><p><strong>Benefit</strong>: many fewer optimisation variables while maintaining non-linearity</p></li>
+<li><p>Particularly useful when there are many weak candidates</p></li>
+</ul>
+</div>
+</section>
+<section id="dominance-pruning" class="slide level2">
+<h2>5. Dominance pruning</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<ul>
+<li class="fragment"><p>Distinct nodes with identical relaxed states:</p>
+<ul>
+<li class="fragment">Node <span class="math inline">(l, \pi)</span></li>
+<li class="fragment">Node <span class="math inline">(l', \pi')</span></li>
+<li class="fragment"><span class="math inline">\tilde{\pi} \equiv \tilde{\pi}'</span></li>
+</ul></li>
+</ul>
+</div><div class="column" style="width:50%;">
+<ul>
+<li class="fragment"><p><strong>Dominance rule</strong>:</p>
+<ul>
+<li class="fragment">If <span class="math inline">l' \leqslant l</span> then discard <span class="math inline">(l, \pi)</span> immediately</li>
+</ul></li>
+<li class="fragment"><p>Eliminates duplicate subtree expansions</p></li>
+</ul>
+</div></div>
+</section>
+<section id="stv-26-workflow-per-node" class="slide level2">
+<h2>STV-26 workflow (per node)</h2>
+<ul>
+<li><p>Dominance check</p>
+<ul>
+<li><strong>Discard</strong> if dominated</li>
+</ul></li>
+<li><p>Calculate min/max tallies</p></li>
+<li><p>Calculate fast bounds (elimination, quota, displacement)</p>
+<ul>
+<li><strong>Prune</strong> if <span class="math inline">lb \geqslant rul</span></li>
+</ul></li>
+<li><p>Solve MINLP</p>
+<ul>
+<li><strong>Prune</strong> if <span class="math inline">lb \geqslant rul</span></li>
+</ul></li>
+<li><p>Expand next node…</p></li>
+</ul>
 
 </section></section>
     </div>

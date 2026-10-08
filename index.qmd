@@ -918,6 +918,121 @@ Since $lb \geqslant rul$
 
     - Avoid equivalent search paths
 
+# Results
+
+## BST-19 re-implemented {.smaller}
+
+|   | BST-19 | BST-19\* |
+|------------------|---------------------------|---------------------------|
+| **Source** | [Blom et al. (2019)](#references) | Our re-implementation |
+| **Ruleset** | Australian Senate | Weighted inclusive Gregory method (WIGM) |
+| **Environment** | 2019 codebase and hardware | Modern 32 vCPU, 128 GB RAM, 30-node parallelisation |
+| **Timeout** | 12 hours (43,200 s) | 10,000 s |
+
+. . .
+
+\
+
+**Goal**: isolate hardware/solver gains vs. new algorithmic contributions in **STV-26**
+
+. . .
+
+BST-19\* already improves on BST-19!
+
+## Small & medium elections {.smaller}
+
+| **Election** | **Seats** | **Candidates** | **Ballots** | **UB** | **BST-19\* LB** | **STV-26 LB** | **BST-19\* Time** | **STV-26 Time** |
+|:-------|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|
+| **MN BET '17** | 2 | 4 | 48,163 | 16,863 | 16,863 | 16,863 | 0.31 s | **0.10 s** |
+| **Glasgow (Linn)** | 4 | 11 | 9,567 | 218 | 218 | 218 | 287 s | **82 s** |
+| **Glasgow (Springburn)** | 3 | 10 | 5,410 | 528 | 505 | **528** | *10 ks* | **441 s** |
+| **Glasgow (Shettleston)** | 4 | 11 | 8,803 | 353 | 270 | **353** | *10 ks* | **6,170 s** |
+| **Dublin North** | 4 | 13 | 43,942 | 211 | 211 | 211 | **165 s** | 174 s |
+
+\
+
+LB = UB $\Rightarrow$ **exact** margin
+
+## Australian Senate {.smaller}
+
+| **Election** | **Seats** | **Candidates** | **Ballots** | **UB** | **BST-19\* LB** | **STV-26 LB** | **BST-19\* Time** | **STV-26 Time** |
+|:--------|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|
+| **ACT 2013** | 2 | 27 | 246,742 | 13,391 | 80 | **2,155** | *10 ks* | *10 ks* |
+| **ACT 2016** | 2 | 22 | 254,767 | 18,835 | 343 | **9,162** | *10 ks* | *10 ks* |
+| **ACT 2019** | 2 | 17 | 95,749 | 12,939 | 1,635 | **9,933** | *10 ks* | *10 ks* |
+| **NT 2013** | 2 | 24 | 103,479 | 2,298 | 212 | **(!) 2,298** | *10 ks* | **1.12 s** |
+| **NT 2016** | 2 | 19 | 102,027 | 11,244 | 3,120 | **7,438** | *10 ks* | *10 ks* |
+| **NT 2019** | 2 | 18 | 37,869 | 15,890 | 3,563 | **9,322** | *10 ks* | *10 ks* |
+
+## Practical impact on audits {.smaller}
+
+Example: **Northern Territory (NT) 2022 Election**
+
+- Old lower bound (BST-19\*) = 474
+- New lower bound (STV-26) = 5,092
+
+. . .
+
+\
+
+| Ballot mismatch rate | Audit sample size (BST-19\*) | Audit sample size (STV-26) |
+|:----------------|----------------------:|----------------------:|
+| 0.1% |   \~ 1,000 ballots |  **\~ 55 ballots** |
+| 1.0% | \~ 100,000 ballots | **\~ 106 ballots** |
+
+: Expected impact on mismatch-based RLA
+
+## Future directions
+
+- Scaling to large 6--12 seat elections, with 100+ candidates
+
+- Extending to alternative STV variants (e.g., Meek)
+
+# Questions?
+
+## Download
+
+Slides :desktop_computer: <https://dvukcevic.github.io/stv-margins-evoteid2026/>
+
+Paper :bookmark_tabs: <https://arxiv.org/abs/2607.21178>
+
+Software :minidisc: <https://github.com/michelleblom/pymarginstv>
+
+![](images/qrcode_dvukcevic-github-io.png)
+
+
+## References :books: {#references .smaller}
+
+- Blom, Conway, Stuckey, Teague (2020). [Did that lost ballot box cost me a seat? Computing manipulations of STV elections](https://doi.org/10.1609/aaai.v34i08.7029). *Proceedings of the AAAI Conference on Artificial Intelligence* 34(08):13235--13240.
+
+- Blom, Stuckey, Teague (2019). [Toward computing the margin of victory in single transferable vote elections](https://doi.org/10.1287/ijoc.2018.0853). *INFORMS Journal on Computing* 31(4):636--653.
+
+- Ek, Blom, Stark, Stuckey, Teague, Vukcevic (2026). [Doing more with less: Mismatch-based risk-limiting audits](https://doi.org/10.1007/978-3-032-00495-6_13). In: Financial Cryptography and Data Security. FC 2025 International Workshops. *Lecture Notes in Computer Science* 15754:241--255.
+
+- Teague, Conway (2022). [iVote issues: Assessment of potential impacts on the 2021 NSW local government elections](http://hdl.handle.net/10062/84432). In: E-Vote-ID 2022. Conference Proceedings, UT Press, pages 42--52.
+
+
+## Image sources :framed_picture: {.smaller}
+
+The [photograph of ballots from the Irish Election 2011](https://commons.wikimedia.org/wiki/File:Irish_Election_2011_-_The_Count_At_The_RDS.jpg) is by William Murphy (via Wikimedia Commons) and is licensed under [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/).
+
+
+# Appendix
+
+## Why is calculating STV margins hard?
+
+1.  Elimination cascades
+
+    - Small early changes can trigger large changes later.
+
+2.  Non-monotonicity
+
+    - Adding votes to $E$ can cause $E$'s preferred ally to lose.
+
+3.  Non-linearity
+
+    - $\tau$ depends non-linearly on the vote tallies.
+
 ## 1. Upper bounds {.smaller}
 
 Use `ConcreteSTV`
@@ -1071,118 +1186,3 @@ New:
     - **Prune** if $lb \geqslant rul$
 
 - Expand next node...
-
-# Results
-
-## BST-19 re-implemented {.smaller}
-
-|   | BST-19 | BST-19\* |
-|------------------|---------------------------|---------------------------|
-| **Source** | [Blom et al. (2019)](#references) | Our re-implementation |
-| **Ruleset** | Australian Senate | Weighted inclusive Gregory method (WIGM) |
-| **Environment** | 2019 codebase and hardware | Modern 32 vCPU, 128 GB RAM, 30-node parallelisation |
-| **Timeout** | 12 hours (43,200 s) | 10,000 s |
-
-. . .
-
-\
-
-**Goal**: isolate hardware/solver gains vs. new algorithmic contributions in **STV-26**
-
-. . .
-
-BST-19\* already improves on BST-19!
-
-## Small & medium elections {.smaller}
-
-| **Election** | **Seats** | **Candidates** | **Ballots** | **UB** | **BST-19\* LB** | **STV-26 LB** | **BST-19\* Time** | **STV-26 Time** |
-|:-------|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|
-| **MN BET '17** | 2 | 4 | 48,163 | 16,863 | 16,863 | 16,863 | 0.31 s | **0.10 s** |
-| **Glasgow (Linn)** | 4 | 11 | 9,567 | 218 | 218 | 218 | 287 s | **82 s** |
-| **Glasgow (Springburn)** | 3 | 10 | 5,410 | 528 | 505 | **528** | *10 ks* | **441 s** |
-| **Glasgow (Shettleston)** | 4 | 11 | 8,803 | 353 | 270 | **353** | *10 ks* | **6,170 s** |
-| **Dublin North** | 4 | 13 | 43,942 | 211 | 211 | 211 | **165 s** | 174 s |
-
-\
-
-LB = UB $\Rightarrow$ **exact** margin
-
-## Australian Senate {.smaller}
-
-| **Election** | **Seats** | **Candidates** | **Ballots** | **UB** | **BST-19\* LB** | **STV-26 LB** | **BST-19\* Time** | **STV-26 Time** |
-|:--------|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|
-| **ACT 2013** | 2 | 27 | 246,742 | 13,391 | 80 | **2,155** | *10 ks* | *10 ks* |
-| **ACT 2016** | 2 | 22 | 254,767 | 18,835 | 343 | **9,162** | *10 ks* | *10 ks* |
-| **ACT 2019** | 2 | 17 | 95,749 | 12,939 | 1,635 | **9,933** | *10 ks* | *10 ks* |
-| **NT 2013** | 2 | 24 | 103,479 | 2,298 | 212 | **(!) 2,298** | *10 ks* | **1.12 s** |
-| **NT 2016** | 2 | 19 | 102,027 | 11,244 | 3,120 | **7,438** | *10 ks* | *10 ks* |
-| **NT 2019** | 2 | 18 | 37,869 | 15,890 | 3,563 | **9,322** | *10 ks* | *10 ks* |
-
-## Practical impact on audits {.smaller}
-
-Example: **Northern Territory (NT) 2022 Election**
-
-- Old lower bound (BST-19\*) = 474
-- New lower bound (STV-26) = 5,092
-
-. . .
-
-\
-
-| Ballot mismatch rate | Audit sample size (BST-19\*) | Audit sample size (STV-26) |
-|:----------------|----------------------:|----------------------:|
-| 0.1% |   \~ 1,000 ballots |  **\~ 55 ballots** |
-| 1.0% | \~ 100,000 ballots | **\~ 106 ballots** |
-
-: Expected impact on mismatch-based RLA
-
-## Future directions
-
-- Scaling to large 6--12 seat elections, with 100+ candidates
-
-- Extending to alternative STV variants (e.g., Meek)
-
-# Questions?
-
-## Download
-
-Slides :desktop_computer: <https://dvukcevic.github.io/stv-margins-evoteid2026/>
-
-Paper :bookmark_tabs: <https://arxiv.org/abs/2607.21178>
-
-Software :minidisc: <https://github.com/michelleblom/pymarginstv>
-
-![](images/qrcode_dvukcevic-github-io.png)
-
-
-## References :books: {#references .smaller}
-
-- Blom, Conway, Stuckey, Teague (2020). [Did that lost ballot box cost me a seat? Computing manipulations of STV elections](https://doi.org/10.1609/aaai.v34i08.7029). *Proceedings of the AAAI Conference on Artificial Intelligence* 34(08):13235--13240.
-
-- Blom, Stuckey, Teague (2019). [Toward computing the margin of victory in single transferable vote elections](https://doi.org/10.1287/ijoc.2018.0853). *INFORMS Journal on Computing* 31(4):636--653.
-
-- Ek, Blom, Stark, Stuckey, Teague, Vukcevic (2026). [Doing more with less: Mismatch-based risk-limiting audits](https://doi.org/10.1007/978-3-032-00495-6_13). In: Financial Cryptography and Data Security. FC 2025 International Workshops. *Lecture Notes in Computer Science* 15754:241--255.
-
-- Teague, Conway (2022). [iVote issues: Assessment of potential impacts on the 2021 NSW local government elections](http://hdl.handle.net/10062/84432). In: E-Vote-ID 2022. Conference Proceedings, UT Press, pages 42--52.
-
-
-## Image sources :framed_picture: {.smaller}
-
-The [photograph of ballots from the Irish Election 2011](https://commons.wikimedia.org/wiki/File:Irish_Election_2011_-_The_Count_At_The_RDS.jpg) is by William Murphy (via Wikimedia Commons) and is licensed under [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/).
-
-
-# Appendix
-
-## Why is calculating STV margins hard?
-
-1.  Elimination cascades
-
-    - Small early changes can trigger large changes later.
-
-2.  Non-monotonicity
-
-    - Adding votes to $E$ can cause $E$'s preferred ally to lose.
-
-3.  Non-linearity
-
-    - $\tau$ depends non-linearly on the vote tallies.
